@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generatore di Rapporti</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+  <div class="max-w-5xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+    <h1 class="text-3xl font-bold mb-6 text-center">Generatore di Rapporti di Servizio BY Costantino Toscano</h1>
+
+    <!-- Pulsanti generali -->
+    <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="addEntry('Entro in servizio.')" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700">
+          Entrata in servizio
+        </button>
+        <button onclick="addEntry('Esco di servizio.')" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700">
+          Uscita di servizio
+        </button>
+        <button onclick="addRawLine('———————————————————————')" 
+        class="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-gray-600">
+          Separa
+        </button>
+        
+
+
+<!-- Pulsante per aprire il modale per formare la pattuglia -->
+<button onclick="openPatrolModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700">
+    Forma Pattuglia
+  </button>
+  
+
+<!-- Modale per formare la pattuglia -->
+<div id="patrolModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl w-96">
+      <h2 class="text-lg font-semibold mb-4">Forma una Pattuglia</h2>
+  
+      <!-- Selezione della pattuglia -->
+      <label for="patrolSelect" class="block mb-2">Pattuglia:</label>
+      <select id="patrolSelect" class="w-full mb-4 border border-gray-300 rounded p-2">
+        <option value="">-- Seleziona una pattuglia --</option>
+    <option value="Beta Como">Beta Como</option>
+    <option value="Trastevere">Trastevere</option>
+    <option value="Viminale">Viminale</option>
+    <option value="Roma 15">Roma 15</option>
+    <option value="Porta Maggiore">Porta Maggiore</option>
+    <option value="Centro Storico">Centro Storico</option>
+    <option value="San Michele">San Michele</option>
+    <option value="Quarto Savona 15">Quarto Savona 15</option>
+    <option value="San Lorenzo">San Lorenzo</option>
+    <option value="San Basilio">San Basilio</option>
+    <option value="Siena Verona 1">Siena Verona 1</option>
+    <option value="Nibbio 01">Nibbio 01</option>
+    <option value="Imola Roma">Imola Roma</option>
+    <option value="Milano Napoli">Milano Napoli</option>
+    <option value="Ariete 01">Ariete 01</option>
+    <option value="Ariete 02">Ariete 02</option>
+    <option value="Celerino 01">Celerino 01</option>
+    <option value="UOPI 01">UOPI 01</option>
+    <option value="POLI 01">POLI 01</option>
+      </select>
+  
+      <!-- Selezione grado operatore -->
+      <div class="mb-4">
+        <label for="operatorGrade" class="block mb-2">Grado Operatore:</label>
+        <select id="operatorGrade" class="w-full border border-gray-300 rounded p-2">
+          <option value="[All. Ag.]">Allievo Agente</option>
+          <option value="[Ag.]">Agente</option>
+          <option value="[Ass.]">Assistente</option>
+          <option value="[Ass. C.]">Assistente Capo</option>
+          <option value="[Ass.C.C.]">Assistente Capo Coordinatore</option>
+          <option value="[All. Sovr.]">Allievo Sovrintendente</option>
+          <option value="[Vice Sovr.]">Vice Sovrintendente</option>
+          <option value="[Sovr.]">Sovrintendente</option>
+          <option value="[Sovr. C.]">Sovrintendente Capo</option>
+          <option value="[Sovr. C.C.]">Sovrintendente Capo Coordinatore</option>
+          <option value="[All. Isp.]">Allievo Ispettore</option>
+          <option value="[Vice Isp.]">Vice Ispettore</option>
+          <option value="[Ispettore]">Ispettore</option>
+          <option value="[Isp. C.]">Ispettore Capo</option>
+          <option value="[Isp. Sup.]">Ispettore Superiore</option>
+          <option value="[Sost.Commiss.]">Sostituto Commissario</option>
+          <option value="[Sost.Commiss.C.]">Sostituto Commissario Coordinatore</option>
+          <option value="[All. Comm.]">Allievo Commissario</option>
+          <option value="[Vice Comm.]">Vice Commissario</option>
+          <option value="[Comm. C.]">Commissario Capo</option>
+          <option value="[Vice Quest.Agg.]">Vice Questore Aggiunto</option>
+          <option value="[Vice Quest.]">Vice Questore</option>
+          <option value="[Primo Dirigente]">Primo Dirigente</option>
+          <option value="[Dirigente Sup.]">Dirigente Superiore</option>
+          <option value="[Dirigente Generale]">Dirigente Generale</option>
+        </select>
+      </div>
+  
+      <!-- Nome operatore -->
+      <div class="mb-4">
+        <label for="operatorName" class="block mb-2">Nome Operatore:</label>
+        <input type="text" id="operatorName" class="w-full border border-gray-300 rounded p-2" placeholder="Inserisci nome operatore">
+      </div>
+  
+      <!-- Pulsanti per confermare o annullare -->
+      <div class="flex justify-end">
+        <button onclick="closePatrolModal()" class="mr-2 text-gray-600 hover:text-gray-900">Annulla</button>
+        <button onclick="confirmFormPatrol()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Conferma
+        </button>
+      </div>
+    </div>
+  </div>
+  
+<!-- Pulsante per aprire il modale Esito -->
+<button onclick="openOutcomeModal()" class="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700">
+    Esito
+  </button>
+
+  <!-- Modale per Esito -->
+<div id="outcomeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl w-96">
+      <h2 class="text-lg font-semibold mb-4">Indica l'esito</h2>
+  
+      <!-- Tipo di evento -->
+      <label for="outcomeType" class="block mb-2">Tipo di evento:</label>
+      <select id="outcomeType" class="w-full mb-4 border border-gray-300 rounded p-2">
+        <option value="azione">Azione</option>
+        <option value="inseguimento">Inseguimento</option>
+      </select>
+  
+      <!-- Esito -->
+      <label for="outcomeResult" class="block mb-2">Esito:</label>
+      <select id="outcomeResult" class="w-full mb-4 border border-gray-300 rounded p-2">
+        <option value="positivo">Positivo</option>
+        <option value="negativo">Negativo</option>
+      </select>
+  
+      <!-- Pulsanti -->
+      <div class="flex justify-end">
+        <button onclick="closeOutcomeModal()" class="mr-2 text-gray-600 hover:text-gray-900">Annulla</button>
+        <button onclick="confirmOutcome()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+          Conferma
+        </button>
+      </div>
+    </div>
+  </div>
+  
+
+  
+          <!-- Pulsante per aprire il modale "Fermo" -->
+<button onclick="openFermoModal()" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">
+    Fermo
+  </button>
+  
+  <!-- Modale per selezionare Veicolo, Colore e Civico -->
+  <div id="fermoModal" class="modal hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded-lg w-96">
+      <h2 class="text-xl font-bold mb-4">Fermo Veicolo</h2>
+  
+      <!-- Selezione Tipo di Veicolo -->
+      <label for="vehicleSelect" class="block text-sm font-semibold mb-2">Seleziona Tipo di Veicolo:</label>
+      <select id="vehicleSelect" class="w-full p-2 border border-gray-300 rounded mb-4">
+        <option value="">-- Seleziona un veicolo --</option>
+        <option value="Auto">Auto</option>
+        <option value="Moto">Moto</option>
+        <option value="Camion">Camion</option>
+      </select>
+  
+      <!-- Selezione Colore del Veicolo -->
+      <label for="colorSelect" class="block text-sm font-semibold mb-2">Seleziona Colore:</label>
+      <select id="colorSelect" class="w-full p-2 border border-gray-300 rounded mb-4">
+        <option value="">-- Seleziona un colore --</option>
+        <option value="grigia">Grigia</option>
+        <option value="blu">Blu</option>
+        <option value="nera">Nera</option>
+        <option value="rossa">Rossa</option>
+        <option value="bianca">Bianca</option>
+        <option value="verde">Verde</option>
+        <option value="gialla">Gialla</option>
+        <!-- Aggiungi altri colori se necessario -->
+      </select>
+  
+      <!-- Selezione Civico -->
+      <label for="civicoInput" class="block text-sm font-semibold mb-2">Civico:</label>
+      <input id="civicoInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
+  
+      <!-- Pulsante per confermare -->
+      <button onclick="confirmFermo()" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">
+        Conferma
+      </button>
+  
+      <!-- Pulsante per chiudere il modale -->
+      <button onclick="closeFermoModal()" class="mt-4 text-gray-500 hover:text-gray-700">
+        Chiudi
+      </button>
+    </div>
+  </div>
+
+  <!-- Pulsante per aprire il modale -->
+<button onclick="openInseguimentoModal()" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700">
+    Inseguimento
+  </button>
+  
+  <!-- Modale -->
+  <div id="inseguimentoModal" class="modal hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded-lg w-96">
+      <h2 class="text-xl font-bold mb-4">Inseguimento</h2>
+  
+      <label class="block mb-2 font-semibold">Tipo veicolo:</label>
+      <select id="inseguimentoVeicolo" class="w-full p-2 border mb-4 rounded">
+        <option value="">-- Seleziona --</option>
+        <option value="auto">Auto</option>
+        <option value="moto">Moto</option>
+        <option value="camion">Camion</option>
+      </select>
+  
+      <label class="block mb-2 font-semibold">Colore:</label>
+      <input type="text" id="inseguimentoColore" class="w-full p-2 border mb-4 rounded" placeholder="es. arancione">
+  
+      <label class="block mb-2 font-semibold">Civico:</label>
+      <input type="text" id="inseguimentoCivico" class="w-full p-2 border mb-4 rounded" placeholder="es. 654">
+  
+      <button onclick="confirmInseguimento()" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700">
+        Conferma
+      </button>
+      <button onclick="closeInseguimentoModal()" class="mt-3 text-gray-500 hover:text-gray-700">
+        Chiudi
+      </button>
+    </div>
+  </div>
+  
+  
+  <!-- Pulsante per aprire il modale "Convergere" -->
+<button onclick="openConvergereModal()" class="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700">
+    Convergere
+  </button>
+  
+  <!-- Modale -->
+  <div id="convergereModal" class="modal hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded-lg w-96">
+      <h2 class="text-xl font-bold mb-4">Convergenza</h2>
+  
+      <!-- Tipo di Situazione -->
+      <label for="situazioneSelect" class="block text-sm font-semibold mb-2">Tipo di situazione:</label>
+      <select id="situazioneSelect" class="w-full p-2 border border-gray-300 rounded mb-4">
+        <option value="">-- Seleziona una situazione --</option>
+        <option value="rapina">Rapina</option>
+        <option value="sparatoria">Sparatoria</option>
+      </select>
+  
+      <!-- Civico -->
+      <label for="civicoConvergere" class="block text-sm font-semibold mb-2">Civico:</label>
+      <input id="civicoConvergere" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
+  
+      <!-- In ausilio di (opzionale) -->
+      <!-- Selezione Pattuglia in Ausilio -->
+<label for="ausilioSelect" class="block text-sm font-semibold mb-2">In ausilio della... (opzionale):</label>
+<select id="ausilioSelect" class="w-full p-2 border border-gray-300 rounded mb-4">
+    <option value="">-- Seleziona una pattuglia --</option>
+    <option value="Beta Como">Beta Como</option>
+    <option value="Trastevere">Trastevere</option>
+    <option value="Viminale">Viminale</option>
+    <option value="Roma 15">Roma 15</option>
+    <option value="Porta Maggiore">Porta Maggiore</option>
+    <option value="Centro Storico">Centro Storico</option>
+    <option value="San Michele">San Michele</option>
+    <option value="Quarto Savona 15">Quarto Savona 15</option>
+    <option value="San Lorenzo">San Lorenzo</option>
+    <option value="San Basilio">San Basilio</option>
+    <option value="Siena Verona 1">Siena Verona 1</option>
+    <option value="Nibbio 01">Nibbio 01</option>
+    <option value="Imola Roma">Imola Roma</option>
+    <option value="Milano Napoli">Milano Napoli</option>
+    <option value="Ariete 01">Ariete 01</option>
+    <option value="Ariete 02">Ariete 02</option>
+    <option value="Celerino 01">Celerino 01</option>
+    <option value="UOPI 01">UOPI 01</option>
+    <option value="POLI 01">POLI 01</option>
+</select>
+
+  
+      <!-- Pulsanti -->
+      <button onclick="confirmConvergere()" class="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700">
+        Conferma
+      </button>
+      <button onclick="closeConvergereModal()" class="mt-4 text-gray-500 hover:text-gray-700">
+        Chiudi
+      </button>
+    </div>
+  </div>
+
+  <!-- Pulsante per aprire il modale "Rientro" -->
+<button onclick="openRientroModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700">
+    Rientro
+  </button>
+  
+  <!-- Modale -->
+  <div id="rientroModal" class="modal hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded-lg w-96">
+      <h2 class="text-xl font-bold mb-4">Rientro</h2>
+  
+      <!-- Selezione tipo rientro -->
+      <label for="tipoRientro" class="block text-sm font-semibold mb-2">Motivo del rientro:</label>
+      <select id="tipoRientro" class="w-full p-2 border border-gray-300 rounded mb-4">
+        <option value="">-- Seleziona --</option>
+        <option value="ripristino">Per ripristino</option>
+        <option value="scioglimento">Per scioglimento</option>
+      </select>
+  
+      <!-- Pulsanti -->
+      <button onclick="confirmRientro()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700">
+        Conferma
+      </button>
+      <button onclick="closeRientroModal()" class="mt-4 text-gray-500 hover:text-gray-700">
+        Chiudi
+      </button>
+    </div>
+  </div>
+  
+  <button onclick="torniamoAlNormale()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700">
+    Torniamo al normale
+  </button>
+  
+  
+  <div class="flex flex-wrap gap-2 mb-4">
+    <button onclick="scriviTitoloSezione('Squadra Volante')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      Squadra Volante
+    </button>
+  
+    <button onclick="scriviTitoloSezione('Desk')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      Desk
+    </button>
+  
+    <button onclick="scriviTitoloSezione('Rep. Mobile')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      Rep. Mobile
+    </button>
+  
+    <button onclick="scriviTitoloSezione('C.O.21')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      C.O.21
+    </button>
+  
+    <button onclick="scriviTitoloSezione('Pol. Strada')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      Pol. Strada
+    </button>
+  
+    <button onclick="scriviTitoloSezione('Scientifica')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      Scientifica
+    </button>
+  
+    <button onclick="scriviTitoloSezione('PolPen')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      PolPen
+    </button>
+  
+    <button onclick="scriviTitoloSezione('N.O.C.S.')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      N.O.C.S.
+    </button>
+  
+    <button onclick="scriviTitoloSezione('U.O.P.I.')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      U.O.P.I.
+    </button>
+  
+    <button onclick="scriviTitoloSezione('Servizio Aereo')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold">
+      Servizio Aereo
+    </button>
+  </div>
+
+  <!-- Pulsante per pulire la text box -->
+<button id="clearButton" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700">
+    Pulisci
+  </button>
+  
+  <!-- Pulsante per copiare tutto il rapporto -->
+  <button id="copyButton" class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700">
+    Copia Rapporto
+  </button>
+  
+      
+
+
+    
+  
+
+    <!-- Editor di testo -->
+    <textarea id="reportText" class="w-full h-72 p-4 border rounded-xl mt-6 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Scrivi qui il tuo rapporto..."></textarea>
+
+    <!-- Pulsante esporta -->
+    <div class="text-center mt-6">
+      <button onclick="exportToPDF()" class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700">
+        Esporta Rapporto
+      </button>
+    </div>
+  </div>
+
+  <script>
+
+// Funzione per pulire la text box
+document.getElementById('clearButton').addEventListener('click', function() {
+  const textarea = document.getElementById('reportText');
+  textarea.value = ''; // Pulisce il contenuto della text area
+});
+
+
+
+// Funzione per copiare il rapporto negli appunti
+document.getElementById('copyButton').addEventListener('click', function() {
+  const textarea = document.getElementById('reportText');
+  
+  // Seleziona tutto il testo nella text area
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // Per dispositivi mobili
+  
+  // Copia il testo negli appunti
+  document.execCommand('copy');
+  
+  // Mostra un messaggio che il testo è stato copiato (opzionale)
+  alert('Rapporto copiato negli appunti!');
+});
+
+
+function openInseguimentoModal() {
+  document.getElementById('inseguimentoModal').classList.remove('hidden');
+}
+
+function closeInseguimentoModal() {
+  document.getElementById('inseguimentoModal').classList.add('hidden');
+}
+
+function confirmInseguimento() {
+  const tipo = document.getElementById('inseguimentoVeicolo').value;
+  const colore = document.getElementById('inseguimentoColore').value.trim();
+  const civico = document.getElementById('inseguimentoCivico').value.trim();
+
+  if (tipo && colore && civico) {
+    const time = getTime(); // Assumendo che hai già una funzione getTime()
+    const textarea = document.getElementById('reportText');
+    textarea.value += `${time} Inseguimento di un ${tipo} ${colore} nei pressi del ${civico}\n`;
+    closeInseguimentoModal();
+  } else {
+    alert("Compila tutti i campi per continuare.");
+  }
+}
+
+
+
+
+function scriviTitoloSezione(nome) {
+  const textarea = document.getElementById('reportText');
+  textarea.value += `——————-${nome.toUpperCase()}——————————\n`;
+}
+
+
+function torniamoAlNormale() {
+  const time = getTime(); // Usa la funzione già esistente per ottenere l'orario
+  const textarea = document.getElementById('reportText');
+  textarea.value += `${time} Torniamo al normale.\n`;
+}
+
+
+
+function openRientroModal() {
+  document.getElementById('rientroModal').classList.remove('hidden');
+}
+
+function closeRientroModal() {
+  document.getElementById('rientroModal').classList.add('hidden');
+}
+
+function confirmRientro() {
+  const motivo = document.getElementById('tipoRientro').value;
+
+  if (motivo) {
+    const time = getTime(); // Funzione già presente
+    const textarea = document.getElementById('reportText');
+    textarea.value += `${time} Facciamo rientro per ${motivo}.\n`;
+    closeRientroModal();
+  } else {
+    alert("Seleziona un motivo per il rientro.");
+  }
+}
+
+
+
+function openConvergereModal() {
+  document.getElementById('convergereModal').classList.remove('hidden');
+}
+
+function closeConvergereModal() {
+  document.getElementById('convergereModal').classList.add('hidden');
+}
+
+function confirmConvergere() {
+  const situazione = document.getElementById('situazioneSelect').value;
+  const civico = document.getElementById('civicoConvergere').value;
+  const ausilio = document.getElementById('ausilioSelect').value;
+
+
+  if (situazione && civico) {
+    let entry = `Convergiamo alla ${situazione} al civico ${civico}`;
+    if (ausilio) {
+      entry += ` in ausilio della ${ausilio}`;
+    }
+
+    const textarea = document.getElementById('reportText');
+    const time = getTime(); // Usa la funzione orario già esistente
+    textarea.value += `${time} ${entry}\n`;
+
+    closeConvergereModal();
+  } else {
+    alert("Per favore seleziona una situazione e inserisci il civico.");
+  }
+}
+
+
+// Funzione per aprire il modale "Fermo"
+function openFermoModal() {
+  document.getElementById('fermoModal').classList.remove('hidden');
+}
+
+// Funzione per chiudere il modale "Fermo"
+function closeFermoModal() {
+  document.getElementById('fermoModal').classList.add('hidden');
+}
+
+// Funzione per confermare la selezione e inserire nel rapporto
+function confirmFermo() {
+  const vehicle = document.getElementById('vehicleSelect').value;
+  const color = document.getElementById('colorSelect').value;
+  const civico = document.getElementById('civicoInput').value;
+
+  // Verifica se tutti i dati sono stati selezionati
+  if (vehicle && color && civico) {
+    const entry = `Fermo di un ${vehicle.toLowerCase()} ${color} nei pressi del ${civico}`;
+    const textarea = document.getElementById('reportText');
+    const time = getTime(); // Aggiunge l'orario
+    textarea.value += `${time} ${entry}\n`;
+    
+    // Chiudi il modale dopo aver confermato
+    closeFermoModal();
+  } else {
+    alert('Per favore seleziona il veicolo, il colore e inserisci il civico.');
+  }
+}
+
+// Funzione per ottenere l'orario corrente
+function getTime() {
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  return `[${hours}:${minutes}]`;
+}
+
+
+
+
+// Funzione per aprire il modale
+function openPatrolModal() {
+  document.getElementById('patrolModal').style.display = 'flex';
+}
+
+// Funzione per chiudere il modale
+function closePatrolModal() {
+  document.getElementById('patrolModal').style.display = 'none';
+}
+
+// Funzione per confermare la formazione della pattuglia
+function confirmFormPatrol() {
+  // Ottieni il valore della pattuglia selezionata
+  const patrol = document.getElementById('patrolSelect').value;
+  
+  // Ottieni il grado e il nome dell'operatore
+  const grade = document.getElementById('operatorGrade').value;
+  const name = document.getElementById('operatorName').value;
+
+  // Controlla che tutti i campi siano compilati
+  if (!patrol || !grade || !name) {
+    alert('Compila tutti i campi!');
+    return;
+  }
+
+  // Ottieni l'ora corrente
+  const now = new Date();
+  const time = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}]`;
+
+  // Crea la riga da aggiungere al rapporto
+  const entry = `${time} Formo ${patrol} con ${grade} ${name}`;
+
+  // Aggiungi l'entry al campo di testo del rapporto
+  const textarea = document.getElementById('reportText');
+  textarea.value += entry + '\n';
+
+  // Chiudi il modale
+  closePatrolModal();
+
+  // Pulisci i campi del modale
+  document.getElementById('operatorName').value = '';
+  document.getElementById('operatorGrade').selectedIndex = 0;
+  document.getElementById('patrolSelect').selectedIndex = 0;
+}
+
+
+// Funzione per esportare il rapporto in PDF
+function exportToPDF() {
+  const { jsPDF } = window.jspdf;
+
+  // Crea una nuova istanza di jsPDF
+  const doc = new jsPDF();
+
+  // Ottieni il contenuto del rapporto (nel caso in cui il rapporto sia in un textarea)
+  const reportText = document.getElementById('reportText').value;
+
+  // Aggiungi il contenuto del rapporto al PDF
+  doc.text(reportText, 10, 10);
+
+  // Salva il PDF con un nome specificato
+  doc.save('rapporto_servizio.pdf');
+
+  doc.setFontSize(18);
+
+  doc.text('Rapporto di Servizio', 10, 10);
+
+  doc.setFontSize(12);
+}
+
+// Funzione per ottenere l'orario corrente (da usare nella scrittura del rapporto)
+function getTime() {
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  return `[${hours}:${minutes}]`;
+}
+ 
+
+    
+    function addSectionTitle(sectionName) {
+        const textarea = document.getElementById('reportText');
+        const formattedName = `——————— ${sectionName} ———————`;
+        textarea.value += `${formattedName}\n`;
+    }
+
+
+
+    function addRawLine(text) {
+        const textarea = document.getElementById('reportText');
+        textarea.value += `${text}\n`;
+    }
+
+    function getTime() {
+      const now = new Date();
+      return `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}]`;
+    }
+
+    function addEntry(text) {
+      const textarea = document.getElementById('reportText');
+      textarea.value += `${getTime()} ${text}\n`;
+    }
+
+    function toggleSection(sectionId) {
+      const section = document.getElementById(`section-${sectionId}`);
+      section.classList.toggle('hidden');
+    }
+
+
+// Apri il modale
+function openOutcomeModal() {
+  document.getElementById('outcomeModal').classList.remove('hidden');
+}
+
+// Chiudi il modale
+function closeOutcomeModal() {
+  document.getElementById('outcomeModal').classList.add('hidden');
+}
+
+// Conferma l'esito
+function confirmOutcome() {
+  const tipo = document.getElementById('outcomeType').value;
+  const esito = document.getElementById('outcomeResult').value;
+  const textarea = document.getElementById('reportText');
+  const time = getTime();
+
+  const testo = `L'${tipo} termina con esito ${esito}.`;
+  textarea.value += `${time} ${testo}\n`;
+
+  closeOutcomeModal();
+}
+
+</script>
+
+</body>
+</html>
