@@ -70,6 +70,7 @@
         <select id="operatorGrade" class="w-full border border-gray-300 rounded p-2">
           <option value="[All. Ag.]">Allievo Agente</option>
           <option value="[Ag.]">Agente</option>
+          <option value="[Ag. Scelto]">Agente Scelto</option>
           <option value="[Ass.]">Assistente</option>
           <option value="[Ass. C.]">Assistente Capo</option>
           <option value="[Ass.C.C.]">Assistente Capo Coordinatore</option>
@@ -87,6 +88,7 @@
           <option value="[Sost.Commiss.C.]">Sostituto Commissario Coordinatore</option>
           <option value="[All. Comm.]">Allievo Commissario</option>
           <option value="[Vice Comm.]">Vice Commissario</option>
+          <option value="[Comm.]">Commissario</option>
           <option value="[Comm. C.]">Commissario Capo</option>
           <option value="[Vice Quest.Agg.]">Vice Questore Aggiunto</option>
           <option value="[Vice Quest.]">Vice Questore</option>
@@ -127,6 +129,7 @@
       <select id="outcomeType" class="w-full mb-4 border border-gray-300 rounded p-2">
         <option value="azione">Azione</option>
         <option value="inseguimento">Inseguimento</option>
+        <option value="Rapina">Rapina</option>
       </select>
   
       <!-- Esito -->
@@ -184,7 +187,11 @@
       <!-- Selezione Civico -->
       <label for="civicoInput" class="block text-sm font-semibold mb-2">Civico:</label>
       <input id="civicoInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
-  
+      <label for="MotivoInput" class="block text-sm font-semibold mb-2">Motivazione:</label>
+      <input id="MotivoInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
+      <label for="targaInput" class="block text-sm font-semibold mb-2">Targa:</label>
+      <input id="targaInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
+        
       <!-- Pulsante per confermare -->
       <button onclick="confirmFermo()" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">
         Conferma
