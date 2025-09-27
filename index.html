@@ -161,67 +161,57 @@
   
 
   
-          <!-- Pulsante per aprire il modale "Fermo" -->
+          <!-- Pulsante per aprire il modale -->
 <button onclick="openFermoModal()" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">
-    Fermo
-  </button>
-  
-  <!-- Modale per selezionare Veicolo, Colore e Civico -->
-  <div id="fermoModal" class="modal hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center">
-    <div class="bg-white p-6 rounded-lg w-96">
-      <h2 class="text-xl font-bold mb-4">Fermo Veicolo</h2>
-  
-      <!-- Selezione Tipo di Veicolo -->
-      <label for="vehicleSelect" class="block text-sm font-semibold mb-2">Seleziona Tipo di Veicolo:</label>
-      <select id="vehicleSelect" class="w-full p-2 border border-gray-300 rounded mb-4">
-        <option value="">-- Seleziona un veicolo --</option>
-        <option value="Auto">Auto</option>
-        <option value="Moto">Moto</option>
-        <option value="Camion">Camion</option>
-      </select>
-  
-      <!-- Selezione Colore del Veicolo -->
-      <label for="colorSelect" class="block text-sm font-semibold mb-2">Seleziona Colore:</label>
-      <select id="colorSelect" class="w-full p-2 border border-gray-300 rounded mb-4">
-        <option value="">-- Seleziona un colore --</option>
-        <option value="grigia">Grigia</option>
-        <option value="blu">Blu</option>
-        <option value="nera">Nera</option>
-        <option value="rossa">Rossa</option>
-        <option value="bianca">Bianca</option>
-        <option value="verde">Verde</option>
-        <option value="gialla">Gialla</option>
-        <!-- Aggiungi altri colori se necessario -->
-      </select>
+  Fermo Veicolo
+</button>
 
-        <!-- Targa del veicolo -->
-<label for="vehiclePlate" class="block mb-2">Targa:</label>
-<input id="vehiclePlate" type="text" placeholder="Inserisci la targa" class="w-full mb-4 border border-gray-300 rounded p-2" />
+<!-- Modale Fermo Veicolo -->
+<div id="fermoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-xl w-96">
+    <h2 class="text-lg font-semibold mb-4">Fermo Veicolo</h2>
 
-<!-- Motivazione del fermo -->
-<label for="vehicleReason" class="block mb-2">Motivazione del fermo:</label>
-<input id="vehicleReason" type="text" placeholder="Inserisci la motivazione" class="w-full mb-4 border border-gray-300 rounded p-2" />
+    <!-- Tipo di veicolo -->
+    <label for="vehicleSelect" class="block mb-2">Seleziona Tipo di Veicolo:</label>
+    <select id="vehicleSelect" class="w-full mb-4 border border-gray-300 rounded p-2">
+      <option value="">-- Seleziona --</option>
+      <option value="Auto">Auto</option>
+      <option value="Moto">Moto</option>
+      <option value="Furgone">Furgone</option>
+    </select>
 
-  
-      <!-- Selezione Civico -->
-      <label for="civicoInput" class="block text-sm font-semibold mb-2">Civico:</label>
-      <input id="civicoInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
-      <label for="MotivoInput" class="block text-sm font-semibold mb-2">Motivazione:</label>
-      <input id="MotivoInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
-      <label for="targaInput" class="block text-sm font-semibold mb-2">Targa:</label>
-      <input id="targaInput" type="text" class="w-full p-2 border border-gray-300 rounded mb-4" placeholder="Inserisci il civico">
-        
-      <!-- Pulsante per confermare -->
-      <button onclick="confirmFermo()" class="bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700">
+    <!-- Colore -->
+    <label for="colorSelect" class="block mb-2">Seleziona Colore:</label>
+    <select id="colorSelect" class="w-full mb-4 border border-gray-300 rounded p-2">
+      <option value="">-- Seleziona --</option>
+      <option value="Nero">Nero</option>
+      <option value="Bianco">Bianco</option>
+      <option value="Rosso">Rosso</option>
+      <option value="Blu">Blu</option>
+      <option value="Grigio">Grigio</option>
+    </select>
+
+    <!-- Targa -->
+    <label for="plateInput" class="block mb-2">Targa:</label>
+    <input id="plateInput" type="text" placeholder="Inserisci Targa" class="w-full mb-4 border border-gray-300 rounded p-2">
+
+    <!-- Motivazione -->
+    <label for="reasonInput" class="block mb-2">Motivazione del fermo:</label>
+    <input id="reasonInput" type="text" placeholder="Inserisci motivazione" class="w-full mb-4 border border-gray-300 rounded p-2">
+
+    <!-- Civico -->
+    <label for="civicoInput" class="block mb-2">Civico:</label>
+    <input id="civicoInput" type="text" placeholder="Inserisci civico" class="w-full mb-4 border border-gray-300 rounded p-2">
+
+    <!-- Pulsanti -->
+    <div class="flex justify-end">
+      <button onclick="closeFermoModal()" class="mr-2 text-gray-600 hover:text-gray-900">Chiudi</button>
+      <button onclick="confirmFermo()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
         Conferma
-      </button>
-  
-      <!-- Pulsante per chiudere il modale -->
-      <button onclick="closeFermoModal()" class="mt-4 text-gray-500 hover:text-gray-700">
-        Chiudi
       </button>
     </div>
   </div>
+</div>
 
   <!-- Pulsante per aprire il modale -->
 <button onclick="openInseguimentoModal()" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700">
@@ -538,37 +528,43 @@ function confirmConvergere() {
 }
 
 
-// Funzione per aprire il modale "Fermo"
-function openFermoModal() {
-  document.getElementById('fermoModal').classList.remove('hidden');
-}
-
-// Funzione per chiudere il modale "Fermo"
-function closeFermoModal() {
-  document.getElementById('fermoModal').classList.add('hidden');
-}
-
-// Funzione per confermare la selezione e inserire nel rapporto
-function confirmFermo() {
-  const vehicle = document.getElementById('vehicleSelect').value;
-  const color = document.getElementById('colorSelect').value;
-  const civico = document.getElementById('civicoInput').value;
-  const plate = document.getElementById('plateInput').value;       // ➕ Targa
-  const reason = document.getElementById('reasonInput').value;     // ➕ Motivazione
-
-  // Verifica se tutti i dati sono stati selezionati
-  if (vehicle && color && civico && plate && reason) {
-    const entry = `Fermo di un ${vehicle.toLowerCase()} ${color} nei pressi del ${civico} - Targa: ${plate} - Motivo: ${reason}`;
-    const textarea = document.getElementById('reportText');
-    const time = getTime(); // Aggiunge l'orario
-    textarea.value += `${time} ${entry}\n`;
-    
-    // Chiudi il modale dopo aver confermato
-    closeFermoModal();
-  } else {
-    alert('Per favore compila tutti i campi (veicolo, colore, civico, targa e motivazione).');
+ // Funzione per aprire il modale "Fermo"
+  function openFermoModal() {
+    document.getElementById('fermoModal').classList.remove('hidden');
   }
-}
+
+  // Funzione per chiudere il modale "Fermo"
+  function closeFermoModal() {
+    document.getElementById('fermoModal').classList.add('hidden');
+  }
+
+  // Funzione per ottenere l'orario attuale
+  function getTime() {
+    const now = new Date();
+    return `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}]`;
+  }
+
+  // Funzione per confermare la selezione e inserire nel rapporto
+  function confirmFermo() {
+    const vehicle = document.getElementById('vehicleSelect').value;
+    const color = document.getElementById('colorSelect').value;
+    const plate = document.getElementById('plateInput').value;
+    const reason = document.getElementById('reasonInput').value;
+    const civico = document.getElementById('civicoInput').value;
+
+    // Verifica se tutti i dati sono stati inseriti
+    if (vehicle && color && plate && reason && civico) {
+      const entry = `Fermo di un ${vehicle.toLowerCase()} ${color} targa ${plate}, nei pressi del ${civico}. Motivazione: ${reason}.`;
+      const textarea = document.getElementById('reportText');
+      const time = getTime();
+      textarea.value += `${time} ${entry}\n`;
+
+      // Chiudi il modale dopo aver confermato
+      closeFermoModal();
+    } else {
+      alert('Per favore compila tutti i campi.');
+    }
+  }
 
 
 // Funzione per ottenere l'orario corrente
