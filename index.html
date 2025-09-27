@@ -129,8 +129,16 @@
       <select id="outcomeType" class="w-full mb-4 border border-gray-300 rounded p-2">
         <option value="azione">Azione</option>
         <option value="inseguimento">Inseguimento</option>
-        <option value="Rapina">Rapina</option>
+        <option value="rapina">Rapina</option>
       </select>
+
+        <!-- Box aggiuntivo visibile solo per Rapina -->
+<div id="negotiationBox" class="hidden mt-4">
+  <label for="negotiationOutcome" class="block mb-2">Esito contrattazione:</label>
+  <input id="negotiationOutcome" type="text" placeholder="Esito della contrattazione"
+         class="w-full border border-gray-300 rounded p-2" />
+</div>
+
   
       <!-- Esito -->
       <label for="outcomeResult" class="block mb-2">Esito:</label>
@@ -138,6 +146,8 @@
         <option value="positivo">Positivo</option>
         <option value="negativo">Negativo</option>
       </select>
+
+        
   
       <!-- Pulsanti -->
       <div class="flex justify-end">
@@ -183,6 +193,17 @@
         <option value="gialla">Gialla</option>
         <!-- Aggiungi altri colori se necessario -->
       </select>
+
+        <!-- Targa del veicolo -->
+<label for="vehiclePlate" class="block mb-2">Targa:</label>
+<input id="vehiclePlate" type="text" placeholder="Inserisci la targa"
+       class="w-full mb-4 border border-gray-300 rounded p-2" />
+
+<!-- Motivazione del fermo -->
+<label for="vehicleReason" class="block mb-2">Motivazione del fermo:</label>
+<input id="vehicleReason" type="text" placeholder="Inserisci la motivazione"
+       class="w-full mb-4 border border-gray-300 rounded p-2" />
+
   
       <!-- Selezione Civico -->
       <label for="civicoInput" class="block text-sm font-semibold mb-2">Civico:</label>
@@ -534,10 +555,12 @@ function confirmFermo() {
   const vehicle = document.getElementById('vehicleSelect').value;
   const color = document.getElementById('colorSelect').value;
   const civico = document.getElementById('civicoInput').value;
+  const plate = document.getElementById('plateInput').value;       // ➕ Targa
+  const reason = document.getElementById('reasonInput').value;     // ➕ Motivazione
 
   // Verifica se tutti i dati sono stati selezionati
-  if (vehicle && color && civico) {
-    const entry = `Fermo di un ${vehicle.toLowerCase()} ${color} nei pressi del ${civico}`;
+  if (vehicle && color && civico && plate && reason) {
+    const entry = `Fermo di un ${vehicle.toLowerCase()} ${color} nei pressi del ${civico} - Targa: ${plate} - Motivo: ${reason}`;
     const textarea = document.getElementById('reportText');
     const time = getTime(); // Aggiunge l'orario
     textarea.value += `${time} ${entry}\n`;
@@ -545,9 +568,10 @@ function confirmFermo() {
     // Chiudi il modale dopo aver confermato
     closeFermoModal();
   } else {
-    alert('Per favore seleziona il veicolo, il colore e inserisci il civico.');
+    alert('Per favore compila tutti i campi (veicolo, colore, civico, targa e motivazione).');
   }
 }
+
 
 // Funzione per ottenere l'orario corrente
 function getTime() {
@@ -691,6 +715,18 @@ function confirmOutcome() {
   closeOutcomeModal();
 }
 
+// Mostra/nasconde il box "Esito contrattazione" se l'evento è Rapina
+document.getElementById('outcomeType').addEventListener('change', function () {
+  const negotiationBox = document.getElementById('negotiationBox');
+  if (this.value === 'rapina') {
+    negotiationBox.classList.remove('hidden');
+  } else {
+    negotiationBox.classList.add('hidden');
+  }
+});
+
+
+      
 </script>
 
 </body>
