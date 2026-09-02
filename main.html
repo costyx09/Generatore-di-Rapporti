@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generatore di Rapporti di Servizio — V2</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        },
+        colors: {
+          ink:        '#0B1220',
+          panel:      '#0F1B30',
+          panel2:     '#132140',
+          border1:    '#22314F',
+          paper:      '#F4F6FB',
+          accent:     '#3B63F4',
+          accent600:  '#2C4FD9',
+          amber:      '#D98E2B',
+          danger:     '#D9534F',
+          teal:       '#1F9E8B',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-feature-settings: "tnum" 1; }
+
+  /* scrollbars */
+  .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: #2A3A5C; border-radius: 8px; }
+  .scroll-thin:hover::-webkit-scrollbar-thumb { background: #354a73; }
+
+  /* details marker */
+  summary { list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  .chev { transition: transform .18s ease; }
+  details[open] .chev { transform: rotate(90deg); }
+
+  /* modal transitions */
+  .modal-overlay {
+    opacity: 0;
+    transition: opacity .16s ease;
+  }
+  .modal-overlay.modal-visible { opacity: 1; }
+  .modal-card {
+    transform: translateY(8px) scale(.98);
+    opacity: 0;
+    transition: transform .16s ease, opacity .16s ease;
+  }
+  .modal-overlay.modal-visible .modal-card {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  /* toast */
+  .toast {
+    animation: toast-in .18s ease forwards;
+  }
+  .toast.leaving { animation: toast-out .16s ease forwards; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-4px); } }
+
+  textarea:focus, input:focus, select:focus, button:focus-visible {
+    outline: 2px solid #3B63F4;
+    outline-offset: 1px;
+  }
+
+  .action-btn {
+    border-left: 3px solid transparent;
+  }
+  .action-btn:hover { border-left-color: var(--dot, #3B63F4); }
+
+  .embedded-tool {
+    display: block;
+    width: 100%;
+    height: clamp(520px, calc(100vh - 220px), 900px);
+  }
+</style>
+</head>
+
+<body class="bg-ink text-slate-100 font-sans min-h-screen flex flex-col">
+
+<!-- ============================================================ HEADER -->
+<header class="sticky top-0 z-30 bg-ink/95 backdrop-blur border-b border-border1">
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0" fill="none">
+        <rect x="1" y="1" width="32" height="32" rx="8" stroke="#3B63F4" stroke-width="1.5"/>
+        <path d="M17 8l7 3v5c0 5-3 8.2-7 10-4-1.8-7-5-7-10v-5l7-3z" fill="#3B63F4" fill-opacity=".18" stroke="#3B63F4" stroke-width="1.4" stroke-linejoin="round"/>
+      </svg>
+      <div class="min-w-0">
+        <h1 class="text-[15px] sm:text-base font-semibold tracking-tight text-white leading-tight truncate">Generatore di Rapporti di Servizio <span class="text-slate-400 font-normal">by Costantino Toscano</span></h1>
+        <p class="text-[11px] sm:text-xs text-slate-400 leading-tight">Compilazione rapida del rapporto — orario automatico</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 sm:gap-4 shrink-0">
+      <div class="hidden sm:flex flex-col items-end leading-tight">
+        <span id="appClock" class="font-mono text-sm text-slate-200">--:--</span>
+        <span id="appDate" class="text-[11px] text-slate-500">--</span>
+      </div>
+      <div class="hidden sm:flex flex-col items-end leading-tight min-w-[112px]">
+        <span id="serviceTimerLabel" class="text-[10px] text-slate-500">Non in servizio</span>
+        <span id="serviceTimer" class="font-mono text-sm text-slate-200">--:--:--</span>
+      </div>
+      <div id="saveStatus" class="flex items-center gap-1.5 text-xs text-slate-400 bg-panel2 border border-border1 rounded-full px-3 py-1.5 whitespace-nowrap">
+        <span id="saveDot" class="w-1.5 h-1.5 rounded-full bg-teal"></span>
+        <span id="saveLabel">Salvato</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ MAIN -->
+<main class="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5 items-start">
+
+  <!-- ---------------------------------------------------------- SIDEBAR / AZIONI -->
+  <section aria-label="Strumenti e azioni" class="bg-panel border border-border1 rounded-2xl p-3 sm:p-4 flex flex-col lg:sticky lg:top-[76px] lg:max-h-[calc(100vh-96px)] overflow-y-auto scroll-thin">
+
+    <!-- GENERALI -->
+    <details open class="mb-2 group">
+      <summary class="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-panel2">
+        <span class="text-[11px] font-semibold tracking-wide text-slate-300">Generali</span>
+        <svg class="chev w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="pt-1 pb-2 flex flex-col gap-1">
+        <button onclick="Rapporto.startService()" style="--dot:#3B63F4" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Entrata in servizio</button>
+        <button onclick="Rapporto.stopService()" style="--dot:#D9534F" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Uscita di servizio</button>
+        <button onclick="Rapporto.addSeparator()" style="--dot:#64748B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Separa</button>
+      </div>
+    </details>
+
+    <!-- SQUADRA / PATTUGLIA -->
+    <details open class="mb-2 group border-t border-border1 pt-2">
+      <summary class="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-panel2">
+        <span class="text-[11px] font-semibold tracking-wide text-slate-300">Squadra / Pattuglia</span>
+        <svg class="chev w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="pt-1 pb-2 flex flex-col gap-1">
+        <button onclick="Patrol.open()" style="--dot:#3B63F4" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Forma pattuglia</button>
+        <button onclick="Rientro.open()" style="--dot:#3B63F4" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Rientro</button>
+        <button onclick="Rapporto.addEntry('Torniamo al normale.')" style="--dot:#1F9E8B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Torniamo al normale</button>
+      </div>
+    </details>
+
+    <!-- DESK -->
+    <details open class="mb-2 group border-t border-border1 pt-2">
+      <summary class="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-panel2">
+        <span class="text-[11px] font-semibold tracking-wide text-slate-300">Desk</span>
+        <svg class="chev w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="pt-1 pb-2 flex flex-col gap-1">
+        <button onclick="Rapporto.addEntry('Effettuata richiesta PDA.')" style="--dot:#D98E2B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Effettuata richiesta PDA</button>
+        <button onclick="Rapporto.addEntry('Effettuato rilascio PDA.')" style="--dot:#1F9E8B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Effettuato rilascio PDA</button>
+      </div>
+    </details>
+
+    <!-- EVENTI -->
+    <details open class="mb-2 group border-t border-border1 pt-2">
+      <summary class="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-panel2">
+        <span class="text-[11px] font-semibold tracking-wide text-slate-300">Eventi</span>
+        <svg class="chev w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="pt-1 pb-2 flex flex-col gap-1">
+        <button onclick="Fermo.open()" style="--dot:#D98E2B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Fermo</button>
+        <button onclick="Inseguimento.open()" style="--dot:#D9534F" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Inseguimento</button>
+        <button onclick="Convergenza.open()" style="--dot:#3B63F4" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Convergenza</button>
+        <button onclick="Esito.open()" style="--dot:#8B5CF6" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Esito</button>
+      </div>
+    </details>
+
+    <!-- SEZIONI DEL RAPPORTO -->
+    <details open class="mb-1 group border-t border-border1 pt-2 order-first">
+      <summary class="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-panel2">
+        <span class="text-[11px] font-semibold tracking-wide text-slate-300">Sezioni del rapporto</span>
+        <svg class="chev w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="pt-1 pb-1 grid grid-cols-2 gap-1" id="sectionButtons"></div>
+    </details>
+
+  </section>
+
+  <!-- ---------------------------------------------------------- EDITOR -->
+  <section aria-label="Editor del rapporto" class="bg-panel border border-border1 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 min-h-[70vh]">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <button id="copyBtn" onclick="Clipboard.copyReport()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-accent hover:bg-accent600 text-white transition-colors">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Copia rapporto
+        </button>
+        <button id="undoBtn" onclick="Rapporto.undo()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 8H4v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13c1.8-3.8 6.4-5.4 10.2-3.6A6.5 6.5 0 0 1 18 15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Annulla ultima
+        </button>
+        <button id="toolBtn" onclick="Tool.toggle('fdo')" aria-pressed="false" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
+          <span aria-hidden="true">⚖️</span>
+          FDO Facile
+        </button>
+        <button id="databaseBtn" onclick="Tool.toggle('database')" aria-pressed="false" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
+          <span aria-hidden="true">🗃️</span>
+          Database IPRP
+        </button>
+        <button id="clearBtn" onclick="Rapporto.requestClear()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-7 0v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Pulisci
+        </button>
+      </div>
+      <span id="reportMeta" class="text-[11px] text-slate-500 font-mono">0 righe · 0 caratteri</span>
+    </div>
+
+    <textarea id="reportText"
+      class="w-full flex-1 min-h-[420px] resize-y bg-paper text-slate-900 font-mono text-[13.5px] leading-relaxed p-4 rounded-xl border border-border1 focus:border-accent scroll-thin"
+      placeholder="Il rapporto comparirà qui. Usa i pulsanti a sinistra oppure scrivi liberamente…"
+      spellcheck="false"></textarea>
+
+    <iframe id="toolFrame"
+      src="https://www.fdofacile.it/penale"
+      title="FDO Facile - calcolo arresti e sanzioni"
+      loading="lazy"
+      class="embedded-tool hidden rounded-xl border border-border1 bg-white"
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+
+    <iframe id="databaseFrame"
+      src="https://database.iprp.it/login"
+      title="Database IPRP - accesso al sistema"
+      loading="lazy"
+      class="embedded-tool hidden rounded-xl border border-border1 bg-white"
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+
+    <div class="flex justify-end pt-1">
+      <button onclick="PDF.export()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-ink font-medium text-sm hover:bg-slate-200 transition-colors">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Esporta PDF
+      </button>
+    </div>
+  </section>
+</main>
+
+<footer class="text-center text-[11px] text-slate-600 py-4">Generatore di Rapporti di Servizio — V2 · Realizzato da Costantino Toscano · dati salvati solo nel tuo browser</footer>
+
+<!-- ============================================================ TOASTS -->
+<div id="toastContainer" class="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 z-[70] flex flex-col gap-2 items-center sm:items-end"></div>
+
+<!-- ============================================================ MODAL: FORMA PATTUGLIA -->
+<div id="patrolModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'patrolModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-4">Forma una pattuglia</h2>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="patrolSelect">Pattuglia</label>
+    <select id="patrolSelect" onchange="Patrol.toggleCustom()" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="">— Seleziona una pattuglia —</option>
+      <option value="Beta Como">Beta Como</option>
+      <option value="Trastevere">Trastevere</option>
+      <option value="Viminale">Viminale</option>
+      <option value="Roma 15">Roma 15</option>
+      <option value="Porta Maggiore">Porta Maggiore</option>
+      <option value="Centro Storico">Centro Storico</option>
+      <option value="San Michele">San Michele</option>
+      <option value="Quarto Savona 15">Quarto Savona 15</option>
+      <option value="San Lorenzo">San Lorenzo</option>
+      <option value="San Basilio">San Basilio</option>
+      <option value="Siena Verona 1">Siena Verona 1</option>
+      <option value="Nibbio 01">Nibbio 01</option>
+      <option value="Imola Roma">Imola Roma</option>
+      <option value="Milano Napoli">Milano Napoli</option>
+      <option value="Ariete 01">Ariete 01</option>
+      <option value="Ariete 02">Ariete 02</option>
+      <option value="Celerino 01">Celerino 01</option>
+      <option value="UOPI 01">UOPI 01</option>
+      <option value="POLI 01">POLI 01</option>
+      <option value="__custom__">Altro (inserisci manualmente)</option>
+    </select>
+
+    <div id="patrolCustomWrap" class="hidden mb-3">
+      <label class="block text-xs text-slate-400 mb-1.5" for="patrolCustomName">Nome pattuglia</label>
+      <input id="patrolCustomName" type="text" placeholder="es. Alfa Trieste" class="w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+    </div>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="operatorGrade">Grado operatore</label>
+    <select id="operatorGrade" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="[All. Ag.]">Allievo Agente</option>
+      <option value="[Ag.]">Agente</option>
+      <option value="[Ag. Sc.]">Agente Scelto</option>
+      <option value="[Ass.]">Assistente</option>
+      <option value="[Ass. C.]">Assistente Capo</option>
+      <option value="[Ass. C.C.]">Assistente Capo Coordinatore</option>
+      <option value="[All. Sovr.]">Allievo Sovrintendente</option>
+      <option value="[Vice Sovr.]">Vice Sovrintendente</option>
+      <option value="[Sovr.]">Sovrintendente</option>
+      <option value="[Sovr. C.]">Sovrintendente Capo</option>
+      <option value="[Sovr. C.C.]">Sovrintendente Capo Coordinatore</option>
+      <option value="[All. Isp.]">Allievo Ispettore</option>
+      <option value="[Vice Isp.]">Vice Ispettore</option>
+      <option value="[Isp.]">Ispettore</option>
+      <option value="[Isp. C.]">Ispettore Capo</option>
+      <option value="[Isp. Sup.]">Ispettore Superiore</option>
+      <option value="[Sost. Comm.]">Sostituto Commissario</option>
+      <option value="[Sost. Comm. C.]">Sostituto Commissario Coordinatore</option>
+      <option value="[All. Comm.]">Allievo Commissario</option>
+      <option value="[Vice Comm.]">Vice Commissario</option>
+      <option value="[Comm.]">Commissario</option>
+      <option value="[Comm. C.]">Commissario Capo</option>
+      <option value="[Vice Quest. Agg.]">Vice Questore Aggiunto</option>
+      <option value="[Vice Quest.]">Vice Questore</option>
+      <option value="[Primo Dir.]">Primo Dirigente</option>
+      <option value="[Dir. Sup.]">Dirigente Superiore</option>
+      <option value="[Dir. Gen.]">Dirigente Generale</option>
+    </select>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="operatorName">Nome operatore</label>
+    <input id="operatorName" type="text" placeholder="es. Mario Rossi" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <div class="flex justify-end gap-2">
+      <button onclick="Modal.close('patrolModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Patrol.confirm()" class="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: FERMO -->
+<div id="fermoModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'fermoModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-4">Fermo</h2>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="fermoTipo">Tipo veicolo</label>
+    <select id="fermoTipo" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="">— Seleziona —</option>
+      <option value="Auto">Auto</option>
+      <option value="Moto">Moto</option>
+      <option value="Camion">Camion</option>
+      <option value="Furgone">Furgone</option>
+      <option value="Quad">Quad</option>
+      <option value="Persona">Persona (a piedi)</option>
+    </select>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="fermoColore">Colore <span class="text-slate-600">(opzionale)</span></label>
+    <input id="fermoColore" list="colorList" type="text" placeholder="es. blu" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="fermoTarga">Targa <span class="text-slate-600">(opzionale)</span></label>
+    <input id="fermoTarga" type="text" placeholder="es. AB123CD" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100 uppercase">
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="fermoCivico">Civico / località <span class="text-slate-600">(opzionale)</span></label>
+    <input id="fermoCivico" type="text" placeholder="es. Via Roma 12" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="fermoMotivo">Motivazione del fermo</label>
+    <input id="fermoMotivo" type="text" placeholder="es. controllo" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <div class="flex justify-end gap-2">
+      <button onclick="Modal.close('fermoModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Fermo.confirm()" class="px-4 py-2 text-sm rounded-lg bg-amber hover:brightness-110 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: INSEGUIMENTO -->
+<div id="inseguimentoModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'inseguimentoModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-4">Inseguimento</h2>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="inseguimentoTipo">Tipo veicolo</label>
+    <select id="inseguimentoTipo" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="">— Seleziona —</option>
+      <option value="Auto">Auto</option>
+      <option value="Moto">Moto</option>
+      <option value="Camion">Camion</option>
+      <option value="Furgone">Furgone</option>
+      <option value="Persona">Persona (a piedi)</option>
+    </select>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="inseguimentoColore">Colore <span class="text-slate-600">(opzionale)</span></label>
+    <input id="inseguimentoColore" list="colorList" type="text" placeholder="es. arancione" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="inseguimentoCivico">Civico / località</label>
+    <input id="inseguimentoCivico" type="text" placeholder="es. 654" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <div class="flex justify-end gap-2">
+      <button onclick="Modal.close('inseguimentoModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Inseguimento.confirm()" class="px-4 py-2 text-sm rounded-lg bg-danger hover:brightness-110 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: CONVERGENZA -->
+<div id="convergenzaModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'convergenzaModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-4">Convergenza</h2>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="convergenzaSituazione">Tipo di situazione</label>
+    <select id="convergenzaSituazione" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="">— Seleziona —</option>
+      <option value="rapina">Rapina</option>
+      <option value="sparatoria">Sparatoria</option>
+      <option value="rissa">Rissa</option>
+      <option value="incidente">Incidente</option>
+    </select>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="convergenzaCivico">Civico</label>
+    <input id="convergenzaCivico" type="text" placeholder="es. Via Tuscolana 45" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="convergenzaAusilio">In ausilio della… <span class="text-slate-600">(opzionale)</span></label>
+    <select id="convergenzaAusilio" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="">— Nessuna —</option>
+      <option value="Guardia di Finanza">Guardia di Finanza</option>
+      <option value="Arma dei Carabinieri">Arma dei Carabinieri</option>
+      <option value="Beta Como">Beta Como</option>
+      <option value="Trastevere">Trastevere</option>
+      <option value="Viminale">Viminale</option>
+      <option value="Roma 15">Roma 15</option>
+      <option value="Porta Maggiore">Porta Maggiore</option>
+      <option value="Centro Storico">Centro Storico</option>
+      <option value="San Michele">San Michele</option>
+      <option value="Quarto Savona 15">Quarto Savona 15</option>
+      <option value="San Lorenzo">San Lorenzo</option>
+      <option value="San Basilio">San Basilio</option>
+      <option value="Siena Verona 1">Siena Verona 1</option>
+      <option value="Nibbio 01">Nibbio 01</option>
+      <option value="Imola Roma">Imola Roma</option>
+      <option value="Milano Napoli">Milano Napoli</option>
+      <option value="Ariete 01">Ariete 01</option>
+      <option value="Ariete 02">Ariete 02</option>
+      <option value="Celerino 01">Celerino 01</option>
+      <option value="UOPI 01">UOPI 01</option>
+      <option value="POLI 01">POLI 01</option>
+    </select>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="Modal.close('convergenzaModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Convergenza.confirm()" class="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: ESITO -->
+<div id="esitoModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'esitoModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-4">Esito</h2>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="esitoTipo">Tipo di evento</label>
+    <select id="esitoTipo" onchange="Esito.toggleArrestati()" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="azione">Azione</option>
+      <option value="inseguimento">Inseguimento</option>
+      <option value="rapina">Rapina</option>
+    </select>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="esitoResult">Esito</label>
+    <select id="esitoResult" onchange="Esito.toggleArrestati()" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="positivo">Positivo</option>
+      <option value="negativo">Negativo</option>
+    </select>
+
+    <div id="esitoArrestatiWrap" class="hidden mb-3">
+      <label class="block text-xs text-slate-400 mb-1.5" for="esitoArrestati">Soggetti in stato di arresto</label>
+      <input id="esitoArrestati" type="number" min="1" step="1" value="1" class="w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button onclick="Modal.close('esitoModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Esito.confirm()" class="px-4 py-2 text-sm rounded-lg bg-[#8B5CF6] hover:brightness-110 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: RIENTRO -->
+<div id="rientroModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'rientroModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-4">Rientro</h2>
+
+    <label class="block text-xs text-slate-400 mb-1.5" for="rientroMotivo">Motivo del rientro</label>
+    <select id="rientroMotivo" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      <option value="">— Seleziona —</option>
+      <option value="ripristino">Ripristino</option>
+      <option value="scioglimento">Scioglimento del dispositivo</option>
+      <option value="fine turno">Fine turno</option>
+    </select>
+
+    <div class="flex justify-end gap-2">
+      <button onclick="Modal.close('rientroModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Rientro.confirm()" class="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: CONFERMA GENERICA -->
+<div id="confirmModal" class="modal-overlay hidden fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'confirmModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-sm p-5">
+    <p id="confirmMessage" class="text-sm text-slate-100 mb-5">Confermi l'operazione?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="Modal.close('confirmModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="Confirm.accept()" class="px-4 py-2 text-sm rounded-lg bg-danger hover:brightness-110 text-white">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="colorList">
+  <option value="grigia"></option>
+  <option value="blu"></option>
+  <option value="nera"></option>
+  <option value="rossa"></option>
+  <option value="bianca"></option>
+  <option value="verde"></option>
+  <option value="gialla"></option>
+  <option value="arancione"></option>
+  <option value="marrone"></option>
+</datalist>
+
+<script>
+/* ==========================================================================
+   CONFIGURAZIONE
+   ========================================================================== */
+const CONFIG = {
+  STORAGE_KEY: 'rapporto_servizio_v2',
+  SERVICE_START_KEY: 'rapporto_servizio_start',
+  SECTIONS: ['Squadra Volante','Desk','Rep. Mobile','C.O.21','Pol. Strada','Scientifica','PolPen','N.O.C.S.','U.O.P.I.','Servizio Aereo'],
+  SECTION_ICONS: {
+    'Squadra Volante': '🖥️',
+    'Desk': '🗂️',
+    'Rep. Mobile': '🚓',
+    'C.O.21': '📡',
+    'Pol. Strada': '🛣️',
+    'Scientifica': '🔬',
+    'PolPen': '⚖️',
+    'N.O.C.S.': '🛡️',
+    'U.O.P.I.': '🚨',
+    'Servizio Aereo': '🚁',
+  },
+  AUTOSAVE_DELAY: 400,
+  DESK_REMINDER_INTERVAL: 20 * 60 * 1000,
+  TOAST_DURATION: 2600,
+};
+
+/* ==========================================================================
+   UTILITÀ
+   ========================================================================== */
+const Util = {
+  pad(n) { return n.toString().padStart(2, '0'); },
+  now() { return new Date(); },
+  timeTag() {
+    const d = this.now();
+    return `[${this.pad(d.getHours())}:${this.pad(d.getMinutes())}]`;
+  },
+  isoDate(d) { return `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`; },
+  itDate(d) { return `${this.pad(d.getDate())}/${this.pad(d.getMonth() + 1)}/${d.getFullYear()}`; },
+  cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); },
+};
+
+const Toast = {
+  container: null,
+  init() { this.container = document.getElementById('toastContainer'); },
+  show(message, type = 'success') {
+    const colors = {
+      success: 'bg-teal/90 border-teal',
+      error:   'bg-danger/90 border-danger',
+      info:    'bg-panel2 border-border1',
+    };
+    const el = document.createElement('div');
+    el.className = `toast text-sm text-white px-4 py-2.5 rounded-xl border shadow-lg ${colors[type] || colors.info}`;
+    el.textContent = message;
+    this.container.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('leaving');
+      setTimeout(() => el.remove(), 200);
+    }, CONFIG.TOAST_DURATION);
+  },
+};
+
+const Clock = {
+  serviceStartAt: null,
+  start() {
+    this.loadServiceState();
+    this.tick();
+    setInterval(() => this.tick(), 1000);
+  },
+  tick() {
+    const d = new Date();
+    const clockEl = document.getElementById('appClock');
+    const dateEl = document.getElementById('appDate');
+    const serviceTimerEl = document.getElementById('serviceTimer');
+    const serviceTimerLabelEl = document.getElementById('serviceTimerLabel');
+    if (clockEl) clockEl.textContent = `${Util.pad(d.getHours())}:${Util.pad(d.getMinutes())}`;
+    if (dateEl) dateEl.textContent = Util.itDate(d);
+    if (serviceTimerEl) serviceTimerEl.textContent = this.serviceStartAt
+      ? this.formatDuration(Date.now() - this.serviceStartAt)
+      : '--:--:--';
+    if (serviceTimerLabelEl) serviceTimerLabelEl.textContent = this.serviceStartAt
+      ? 'In servizio da'
+      : 'Non in servizio';
+  },
+  formatDuration(milliseconds) {
+    const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${Util.pad(hours)}:${Util.pad(minutes)}:${Util.pad(seconds)}`;
+  },
+  loadServiceState() {
+    try {
+      const saved = localStorage.getItem(CONFIG.SERVICE_START_KEY);
+      this.serviceStartAt = saved ? Number(saved) : null;
+      if (!Number.isFinite(this.serviceStartAt)) this.serviceStartAt = null;
+    } catch (e) { this.serviceStartAt = null; }
+  },
+  startService() {
+    this.serviceStartAt = Date.now();
+    try { localStorage.setItem(CONFIG.SERVICE_START_KEY, this.serviceStartAt); } catch (e) { /* localStorage non disponibile */ }
+    this.tick();
+  },
+  stopService() {
+    this.serviceStartAt = null;
+    try { localStorage.removeItem(CONFIG.SERVICE_START_KEY); } catch (e) { /* localStorage non disponibile */ }
+    this.tick();
+  },
+};
+
+const Tool = {
+  activeTool: null,
+  toggle(toolName) {
+    const report = document.getElementById('reportText');
+    const frames = {
+      fdo: document.getElementById('toolFrame'),
+      database: document.getElementById('databaseFrame'),
+    };
+    const buttons = {
+      fdo: document.getElementById('toolBtn'),
+      database: document.getElementById('databaseBtn'),
+    };
+    const showingSameTool = this.activeTool === toolName;
+
+    report.classList.toggle('hidden', !showingSameTool);
+    Object.entries(frames).forEach(([name, frame]) => {
+      frame.classList.toggle('hidden', showingSameTool || name !== toolName);
+    });
+    Object.entries(buttons).forEach(([name, button]) => {
+      const isActive = !showingSameTool && name === toolName;
+      button.setAttribute('aria-pressed', String(isActive));
+      button.classList.toggle('bg-accent', isActive);
+      button.classList.toggle('text-white', isActive);
+      button.lastChild.textContent = isActive ? ' Chiudi' : name === 'fdo' ? ' FDO Facile' : ' Database IPRP';
+    });
+    this.activeTool = showingSameTool ? null : toolName;
+  },
+};
+
+/* ==========================================================================
+   RAPPORTO
+   ========================================================================== */
+const Rapporto = {
+  el: null,
+  history: [],
+  deskActive: false,
+  deskLastActivityAt: null,
+  init() {
+    this.el = document.getElementById('reportText');
+    this.el.addEventListener('input', () => {
+      Storage.triggerAutosave();
+      this.updateMeta();
+      if (this.deskActive) this.markDeskActivity();
+    });
+    setInterval(() => this.checkDeskReminder(), 1000);
+  },
+  appendLine(line, trackDesk = true) {
+    this.history.push({
+      value: this.el.value,
+      deskActive: this.deskActive,
+      deskLastActivityAt: this.deskLastActivityAt,
+      serviceStartAt: Clock.serviceStartAt,
+    });
+    if (this.history.length > 50) this.history.shift();
+    const needsBreak = this.el.value.length > 0 && !this.el.value.endsWith('\n');
+    this.el.value += (needsBreak ? '\n' : '') + line + '\n';
+    Storage.triggerAutosave();
+    this.updateMeta();
+    this.el.scrollTop = this.el.scrollHeight;
+    if (trackDesk && this.deskActive) this.markDeskActivity();
+  },
+  addEntry(text) { this.appendLine(`${Util.timeTag()} ${text}`); },
+  undo() {
+    if (!this.history.length) {
+      Toast.show('Nessuna azione da annullare', 'info');
+      return;
+    }
+    const previous = this.history.pop();
+    this.el.value = previous.value;
+    this.deskActive = previous.deskActive;
+    this.deskLastActivityAt = previous.deskLastActivityAt;
+    Clock.serviceStartAt = previous.serviceStartAt;
+    Clock.tick();
+    Storage.triggerAutosave();
+    this.updateMeta();
+    this.el.focus();
+    Toast.show('Ultima azione annullata', 'info');
+  },
+  startService() {
+    this.addEntry('Entro in servizio.');
+    Clock.startService();
+  },
+  stopService() {
+    this.addEntry('Esco di servizio.');
+    Clock.stopService();
+  },
+  addRawLine(text) { this.appendLine(text); },
+  addSectionHeader(name) {
+    if (this.deskActive) this.stopDesk();
+    const icon = CONFIG.SECTION_ICONS[name] || '📄';
+    this.appendLine(`——————${icon} ${name.toUpperCase()}——————`);
+    if (name === 'Desk') this.startDesk();
+  },
+  addSeparator() {
+    this.stopDesk();
+    this.appendLine('———————————————————————');
+  },
+  startDesk() {
+    this.deskActive = true;
+    this.markDeskActivity();
+  },
+  stopDesk() {
+    this.deskActive = false;
+    this.deskLastActivityAt = null;
+  },
+  markDeskActivity() {
+    this.deskLastActivityAt = Date.now();
+  },
+  checkDeskReminder() {
+    if (!this.deskActive || !this.deskLastActivityAt) return;
+    if (Date.now() - this.deskLastActivityAt < CONFIG.DESK_REMINDER_INTERVAL) return;
+    this.appendLine(`${Util.timeTag()} Nulla da segnalare`, false);
+    this.markDeskActivity();
+  },
+  updateMeta() {
+    const text = this.el.value;
+    const lines = text ? text.split('\n').filter(l => l.length > 0).length : 0;
+    const chars = text.length;
+    document.getElementById('reportMeta').textContent = `${lines} righe · ${chars} caratteri`;
+  },
+  requestClear() {
+    if (!this.el.value.trim()) return;
+    Confirm.ask('Sei sicuro di voler cancellare il rapporto?', () => {
+      this.el.value = '';
+      Storage.triggerAutosave();
+      this.updateMeta();
+      Toast.show('Rapporto cancellato', 'info');
+    });
+  },
+};
+
+/* ==========================================================================
+   MODALI (helper generico)
+   ========================================================================== */
+const Modal = {
+  openIds: [],
+  open(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('hidden');
+    requestAnimationFrame(() => el.classList.add('modal-visible'));
+    this.openIds.push(id);
+    const firstField = el.querySelector('select, input');
+    if (firstField) setTimeout(() => firstField.focus(), 60);
+  },
+  close(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('modal-visible');
+    setTimeout(() => el.classList.add('hidden'), 160);
+    this.openIds = this.openIds.filter(x => x !== id);
+  },
+  overlayClick(event, id) {
+    if (event.target.id === id) this.close(id);
+  },
+};
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && Modal.openIds.length) {
+    Modal.close(Modal.openIds[Modal.openIds.length - 1]);
+  }
+});
+
+const Confirm = {
+  pendingCallback: null,
+  ask(message, callback) {
+    document.getElementById('confirmMessage').textContent = message;
+    this.pendingCallback = callback;
+    Modal.open('confirmModal');
+  },
+  accept() {
+    const cb = this.pendingCallback;
+    Modal.close('confirmModal');
+    this.pendingCallback = null;
+    if (cb) cb();
+  },
+};
+
+/* ==========================================================================
+   FORMAZIONE PATTUGLIE
+   ========================================================================== */
+const Patrol = {
+  open() { Modal.open('patrolModal'); },
+  toggleCustom() {
+    const select = document.getElementById('patrolSelect');
+    const wrap = document.getElementById('patrolCustomWrap');
+    wrap.classList.toggle('hidden', select.value !== '__custom__');
+  },
+  confirm() {
+    const select = document.getElementById('patrolSelect');
+    const customName = document.getElementById('patrolCustomName');
+    const grade = document.getElementById('operatorGrade');
+    const name = document.getElementById('operatorName');
+
+    const patrolName = select.value === '__custom__' ? customName.value.trim() : select.value;
+
+    if (!select.value || (select.value === '__custom__' && !patrolName) || !name.value.trim()) {
+      Toast.show('Compila tutti i campi richiesti', 'error');
+      return;
+    }
+
+    Rapporto.addEntry(`Formo ${patrolName} con ${grade.value} ${name.value.trim()}`);
+
+    select.selectedIndex = 0;
+    customName.value = '';
+    document.getElementById('patrolCustomWrap').classList.add('hidden');
+    grade.selectedIndex = 0;
+    name.value = '';
+    Modal.close('patrolModal');
+  },
+};
+
+/* ==========================================================================
+   FERMO
+   ========================================================================== */
+const Fermo = {
+  open() { Modal.open('fermoModal'); },
+  confirm() {
+    const tipo = document.getElementById('fermoTipo').value;
+    const colore = document.getElementById('fermoColore').value.trim();
+    const targa = document.getElementById('fermoTarga').value.trim();
+    const civico = document.getElementById('fermoCivico').value.trim();
+    const motivo = document.getElementById('fermoMotivo').value.trim();
+
+    if (!tipo || !motivo) {
+      Toast.show('Indica almeno il tipo e la motivazione', 'error');
+      return;
+    }
+
+    let subject = tipo === 'Persona' ? 'un individuo' : `un ${tipo.toLowerCase()}`;
+    if (colore) subject += ` ${colore.toLowerCase()}`;
+
+    let phrase = `Fermo di ${subject}`;
+    if (targa) phrase += ` targato ${targa.toUpperCase()}`;
+    if (civico) phrase += ` nei pressi del ${civico}`;
+    phrase += ` - Motivazione: ${motivo}.`;
+
+    Rapporto.addEntry(phrase);
+
+    ['fermoTipo', 'fermoColore', 'fermoTarga', 'fermoCivico', 'fermoMotivo'].forEach(id => {
+      const field = document.getElementById(id);
+      if (field.tagName === 'SELECT') field.selectedIndex = 0; else field.value = '';
+    });
+    Modal.close('fermoModal');
+  },
+};
+
+/* ==========================================================================
+   INSEGUIMENTO
+   ========================================================================== */
+const Inseguimento = {
+  open() { Modal.open('inseguimentoModal'); },
+  confirm() {
+    const tipo = document.getElementById('inseguimentoTipo').value;
+    const colore = document.getElementById('inseguimentoColore').value.trim();
+    const civico = document.getElementById('inseguimentoCivico').value.trim();
+
+    if (!tipo || !civico) {
+      Toast.show('Indica almeno il tipo di veicolo e il civico', 'error');
+      return;
+    }
+
+    let subject = tipo === 'Persona' ? 'un individuo a piedi' : `un ${tipo.toLowerCase()}`;
+    if (colore) subject += ` ${colore.toLowerCase()}`;
+
+    Rapporto.addEntry(`Inseguimento di ${subject} nei pressi del ${civico}.`);
+
+    ['inseguimentoTipo', 'inseguimentoColore', 'inseguimentoCivico'].forEach(id => {
+      const field = document.getElementById(id);
+      if (field.tagName === 'SELECT') field.selectedIndex = 0; else field.value = '';
+    });
+    Modal.close('inseguimentoModal');
+  },
+};
+
+/* ==========================================================================
+   CONVERGENZA
+   ========================================================================== */
+const Convergenza = {
+  open() { Modal.open('convergenzaModal'); },
+  confirm() {
+    const situazione = document.getElementById('convergenzaSituazione').value;
+    const civico = document.getElementById('convergenzaCivico').value.trim();
+    const ausilio = document.getElementById('convergenzaAusilio').value;
+
+    if (!situazione || !civico) {
+      Toast.show('Seleziona la situazione e inserisci il civico', 'error');
+      return;
+    }
+
+    let phrase = `Convergiamo per ${situazione} al civico ${civico}`;
+    if (ausilio) phrase += ` in ausilio della ${ausilio}`;
+
+    Rapporto.addEntry(phrase + '.');
+
+    document.getElementById('convergenzaSituazione').selectedIndex = 0;
+    document.getElementById('convergenzaCivico').value = '';
+    document.getElementById('convergenzaAusilio').selectedIndex = 0;
+    Modal.close('convergenzaModal');
+  },
+};
+
+/* ==========================================================================
+   ESITO
+   ========================================================================== */
+const Esito = {
+  open() { Modal.open('esitoModal'); },
+  toggleArrestati() {
+    const tipo = document.getElementById('esitoTipo').value;
+    const esito = document.getElementById('esitoResult').value;
+    const richiedeArrestati = ['azione', 'inseguimento', 'rapina'].includes(tipo) && esito === 'positivo';
+    document.getElementById('esitoArrestatiWrap').classList.toggle('hidden', !richiedeArrestati);
+  },
+  confirm() {
+    const tipo = document.getElementById('esitoTipo').value;
+    const esito = document.getElementById('esitoResult').value;
+    const richiedeArrestati = ['azione', 'inseguimento', 'rapina'].includes(tipo) && esito === 'positivo';
+
+    const labels = { azione: "l'azione", inseguimento: "l'inseguimento", rapina: 'la rapina' };
+    let phrase = `${Util.cap(labels[tipo])} termina con esito ${esito}.`;
+    if (richiedeArrestati) {
+      const arrestati = Number(document.getElementById('esitoArrestati').value);
+      if (!Number.isInteger(arrestati) || arrestati < 1) {
+        Toast.show('Inserisci il numero dei soggetti arrestati', 'error');
+        return;
+      }
+      phrase += ` Rientriamo in questura con ${arrestati} soggetti in stato di arresto.`;
+    }
+
+    Rapporto.addEntry(phrase);
+
+    document.getElementById('esitoTipo').selectedIndex = 0;
+    document.getElementById('esitoResult').selectedIndex = 0;
+    document.getElementById('esitoArrestati').value = '1';
+    document.getElementById('esitoArrestatiWrap').classList.add('hidden');
+    Modal.close('esitoModal');
+  },
+};
+
+/* ==========================================================================
+   RIENTRO
+   ========================================================================== */
+const Rientro = {
+  open() { Modal.open('rientroModal'); },
+  confirm() {
+    const select = document.getElementById('rientroMotivo');
+    if (!select.value) {
+      Toast.show('Seleziona un motivo per il rientro', 'error');
+      return;
+    }
+    Rapporto.addEntry(`Facciamo rientro per ${select.value}.`);
+    select.selectedIndex = 0;
+    Modal.close('rientroModal');
+  },
+};
+
+/* ==========================================================================
+   LOCAL STORAGE
+   ========================================================================== */
+const Storage = {
+  saveTimeout: null,
+  triggerAutosave() {
+    this.setStatus('saving');
+    clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => this.save(), CONFIG.AUTOSAVE_DELAY);
+  },
+  save() {
+    try {
+      localStorage.setItem(CONFIG.STORAGE_KEY, Rapporto.el.value);
+      this.setStatus('saved');
+    } catch (e) {
+      this.setStatus('error');
+    }
+  },
+  load() {
+    try {
+      const saved = localStorage.getItem(CONFIG.STORAGE_KEY);
+      if (saved) Rapporto.el.value = saved;
+    } catch (e) { /* localStorage non disponibile */ }
+  },
+  setStatus(state) {
+    const dot = document.getElementById('saveDot');
+    const label = document.getElementById('saveLabel');
+    const map = {
+      saving: { color: 'bg-amber', text: 'Salvataggio…' },
+      saved:  { color: 'bg-teal', text: 'Salvato' },
+      error:  { color: 'bg-danger', text: 'Errore salvataggio' },
+    };
+    const s = map[state] || map.saved;
+    dot.className = `w-1.5 h-1.5 rounded-full ${s.color}`;
+    label.textContent = s.text;
+  },
+};
+
+/* ==========================================================================
+   COPIA
+   ========================================================================== */
+const Clipboard = {
+  async copyReport() {
+    const text = Rapporto.el.value;
+    if (!text.trim()) {
+      Toast.show('Il rapporto è vuoto', 'error');
+      return;
+    }
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else if (!this.fallbackCopy(text)) {
+        throw new Error('fallback fallito');
+      }
+      Toast.show('Rapporto copiato!');
+    } catch (e) {
+      if (this.fallbackCopy(text)) {
+        Toast.show('Rapporto copiato!');
+      } else {
+        Toast.show('Copia non riuscita, seleziona e copia manualmente', 'error');
+      }
+    }
+  },
+  fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  },
+};
+
+/* ==========================================================================
+   PDF
+   ========================================================================== */
+const PDF = {
+  export() {
+    const text = Rapporto.el.value;
+    if (!text.trim()) {
+      Toast.show('Nessun contenuto da esportare', 'error');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+    const marginX = 48;
+    const marginBottom = 56;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const usableWidth = pageWidth - marginX * 2;
+    const exportDate = new Date();
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(20);
+    doc.text('Rapporto di Servizio', marginX, 42);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(110);
+    doc.text(`Esportato il ${Util.itDate(exportDate)} alle ${Util.pad(exportDate.getHours())}:${Util.pad(exportDate.getMinutes())}`, marginX, 58);
+
+    doc.setDrawColor(210);
+    doc.line(marginX, 66, pageWidth - marginX, 66);
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(25);
+
+    const lineHeight = 14;
+    let y = 90;
+    const lines = doc.splitTextToSize(text, usableWidth);
+
+    lines.forEach(line => {
+      if (y > pageHeight - marginBottom) {
+        doc.addPage();
+        y = 56;
+      }
+      doc.text(line, marginX, y);
+      y += lineHeight;
+    });
+
+    doc.save(`rapporto_servizio_${Util.isoDate(exportDate)}.pdf`);
+    Toast.show('PDF esportato');
+  },
+};
+
+/* ==========================================================================
+   INIZIALIZZAZIONE
+   ========================================================================== */
+function buildSectionButtons() {
+  const wrap = document.getElementById('sectionButtons');
+  CONFIG.SECTIONS.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn text-left px-2.5 py-2 rounded-lg text-[12.5px] leading-tight text-slate-200 hover:bg-panel2 transition-colors';
+    btn.style.setProperty('--dot', '#1F9E8B');
+    btn.textContent = `${CONFIG.SECTION_ICONS[name] || '📄'} ${name}`;
+    btn.onclick = () => Rapporto.addSectionHeader(name);
+    wrap.appendChild(btn);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  Toast.init();
+  Rapporto.init();
+  Storage.load();
+  Rapporto.updateMeta();
+  Storage.setStatus('saved');
+  Clock.start();
+  buildSectionButtons();
+});
+</script>
+</body>
+</html>
