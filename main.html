@@ -92,10 +92,42 @@
     width: 100%;
     height: clamp(520px, calc(100vh - 220px), 900px);
   }
+
+  .editor-actions > * { flex-shrink: 0; }
+
+  .splash-screen { transition: opacity .35s ease, visibility .35s ease; }
+  .splash-screen.splash-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .splash-progress { animation: splash-progress 10s ease-in-out forwards; }
+  @keyframes splash-progress { from { width: 0; } to { width: 100%; } }
 </style>
 </head>
 
 <body class="bg-ink text-slate-100 font-sans min-h-screen flex flex-col">
+
+<div id="splashScreen" class="splash-screen fixed inset-0 z-[80] flex items-center justify-center bg-ink px-5" role="status" aria-live="polite">
+  <div class="w-full max-w-lg text-center">
+    <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/50 bg-accent/10 text-accent">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 11h6M9 15h4M9 7h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </div>
+    <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-teal">Generatore di Rapporti di Servizio</p>
+    <h2 class="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Da oggi compilare il modulo rapporto non è mai stato così facile.</h2>
+    <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">Prepara gli eventi, controlla gli orari e invia il rapporto con pochi passaggi.</p>
+
+    <div class="mx-auto mt-8 max-w-sm rounded-2xl border border-amber/50 bg-amber/10 p-4 text-left">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 text-amber" aria-hidden="true">♥</span>
+        <div>
+          <h3 class="text-sm font-semibold text-amber">Sostieni il progetto</h3>
+          <p class="mt-1 text-xs leading-relaxed text-slate-300">Una piccola donazione aiuta a mantenere il sito aggiornato e a sviluppare nuove funzioni.</p>
+          <button onclick="Splash.support()" class="mt-3 inline-flex items-center rounded-lg bg-amber px-3 py-2 text-xs font-semibold text-ink hover:brightness-110 transition-colors">Fai una donazione</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mx-auto mt-8 h-1 w-40 overflow-hidden rounded-full bg-panel2" aria-hidden="true"><div class="splash-progress h-full rounded-full bg-accent"></div></div>
+    <button onclick="Splash.close()" class="mt-4 text-xs text-slate-500 underline underline-offset-2 hover:text-slate-300">Salta introduzione</button>
+  </div>
+</div>
 
 <!-- ============================================================ HEADER -->
 <header class="sticky top-0 z-30 bg-ink/95 backdrop-blur border-b border-border1">
@@ -120,6 +152,11 @@
         <span id="serviceTimerLabel" class="text-[10px] text-slate-500">Non in servizio</span>
         <span id="serviceTimer" class="font-mono text-sm text-slate-200">--:--:--</span>
       </div>
+      <button onclick="Support.open()" aria-label="Supporta il progetto con una donazione" class="inline-flex items-center gap-1.5 rounded-lg border border-amber/70 bg-amber/10 px-2.5 py-2 text-xs font-medium text-amber hover:bg-amber/20 transition-colors whitespace-nowrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8A4.3 4.3 0 0 1 12 6.7a4.3 4.3 0 0 1 8.8 2.1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span class="hidden sm:inline">Sostieni il progetto</span>
+        <span class="sm:hidden">Dona</span>
+      </button>
       <div id="saveStatus" class="flex items-center gap-1.5 text-xs text-slate-400 bg-panel2 border border-border1 rounded-full px-3 py-1.5 whitespace-nowrap">
         <span id="saveDot" class="w-1.5 h-1.5 rounded-full bg-teal"></span>
         <span id="saveLabel">Salvato</span>
@@ -200,16 +237,21 @@
   <!-- ---------------------------------------------------------- EDITOR -->
   <section aria-label="Editor del rapporto" class="bg-panel border border-border1 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 min-h-[70vh]">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
+      <div class="editor-actions flex flex-wrap items-center gap-2 min-w-0 flex-1">
         <button id="copyBtn" onclick="Clipboard.copyReport()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-accent hover:bg-accent600 text-white transition-colors">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          Copia rapporto
+          <span id="copyBtnLabel">Copia rapporto</span>
         </button>
+        <button onclick="FormRapporto.open()" aria-label="Prepara il modulo di compilazione dei rapporti" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-teal hover:brightness-110 text-white transition-colors">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h6M9 15h6M9 7h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Modulo rapporto
+        </button>
+        <button id="formCloseBtn" onclick="FormRapporto.close()" class="hidden inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">Torna al rapporto</button>
         <button id="undoBtn" onclick="Rapporto.undo()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 8H4v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13c1.8-3.8 6.4-5.4 10.2-3.6A6.5 6.5 0 0 1 18 15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           Annulla ultima
         </button>
-        <button id="toolBtn" onclick="Tool.toggle('fdo')" aria-pressed="false" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
+        <button id="toolBtn" onclick="window.open('https://www.fdofacile.it/penale', 'fdoPopup', 'width=1200,height=900,noopener,noreferrer');" aria-pressed="false" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
           <span aria-hidden="true">⚖️</span>
           FDO Facile
         </button>
@@ -217,12 +259,8 @@
           <span aria-hidden="true">🗃️</span>
           Database IPRP
         </button>
-        <button id="clearBtn" onclick="Rapporto.requestClear()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-panel2 hover:bg-[#1a2b4d] border border-border1 text-slate-200 transition-colors">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-7 0v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Pulisci
-        </button>
       </div>
-      <span id="reportMeta" class="text-[11px] text-slate-500 font-mono">0 righe · 0 caratteri</span>
+      <span id="reportMeta" class="shrink-0 text-[11px] text-slate-500 font-mono">0 righe · 0 caratteri</span>
     </div>
 
     <textarea id="reportText"
@@ -231,7 +269,6 @@
       spellcheck="false"></textarea>
 
     <iframe id="toolFrame"
-      src="https://www.fdofacile.it/penale"
       title="FDO Facile - calcolo arresti e sanzioni"
       loading="lazy"
       class="embedded-tool hidden rounded-xl border border-border1 bg-white"
@@ -244,7 +281,17 @@
       class="embedded-tool hidden rounded-xl border border-border1 bg-white"
       referrerpolicy="strict-origin-when-cross-origin"></iframe>
 
-    <div class="flex justify-end pt-1">
+    <iframe id="formFrame"
+      title="Modulo Google Forms per il rapporto di servizio"
+      loading="lazy"
+      class="embedded-tool hidden rounded-xl border border-border1 bg-white"
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button id="clearBtn" onclick="Rapporto.requestClear()" class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-danger hover:brightness-110 border border-danger text-white transition-colors">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-7 0v12a1 1 0 0 0 1-1h6a1 1 0 0 0 1-1V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Pulisci
+      </button>
       <button onclick="PDF.export()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-ink font-medium text-sm hover:bg-slate-200 transition-colors">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Esporta PDF
@@ -253,7 +300,10 @@
   </section>
 </main>
 
-<footer class="text-center text-[11px] text-slate-600 py-4">Generatore di Rapporti di Servizio — V2 · Realizzato da Costantino Toscano · dati salvati solo nel tuo browser</footer>
+<footer class="text-center text-[11px] text-slate-600 py-4">
+  Generatore di Rapporti di Servizio — V2 · Realizzato da Costantino Toscano · dati salvati solo nel tuo browser
+  <button onclick="Support.open()" class="ml-2 text-slate-400 hover:text-white underline underline-offset-2">Supporta il progetto</button>
+</footer>
 
 <!-- ============================================================ TOASTS -->
 <div id="toastContainer" class="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 z-[70] flex flex-col gap-2 items-center sm:items-end"></div>
@@ -465,10 +515,10 @@
       <option value="negativo">Negativo</option>
     </select>
 
-    <div id="esitoArrestatiWrap" class="hidden mb-3">
-      <label class="block text-xs text-slate-400 mb-1.5" for="esitoArrestati">Soggetti in stato di arresto</label>
-      <input id="esitoArrestati" type="number" min="1" step="1" value="1" class="w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
-    </div>
+      <div id="esitoArrestatiWrap" class="hidden mb-3">
+        <label class="block text-xs text-slate-400 mb-1.5" for="esitoArrestati">Soggetti in stato di arresto</label>
+        <input id="esitoArrestati" type="number" min="1" step="1" value="1" class="w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      </div>
 
     <div class="flex justify-end gap-2 pt-2">
       <button onclick="Modal.close('esitoModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
@@ -508,6 +558,123 @@
   </div>
 </div>
 
+<!-- ============================================================ MODAL: AGGIORNAMENTI -->
+<div id="updatesModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'updatesModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <div class="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.18em] text-teal font-semibold mb-1">Diario di bordo</p>
+        <h2 class="text-xl font-semibold text-white">Cosa c’è di nuovo</h2>
+        <p class="text-sm text-slate-400 mt-1">Le funzioni che rendono la compilazione più rapida.</p>
+      </div>
+      <span class="shrink-0 rounded-full border border-teal/40 bg-teal/10 px-2.5 py-1 text-[11px] font-mono text-teal">V2.1</span>
+    </div>
+
+    <div class="border-l border-border1 pl-4 ml-1 space-y-5">
+      <article class="relative">
+        <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-teal ring-4 ring-panel"></span>
+        <p class="text-[11px] font-mono text-slate-500 mb-1">03 SETTEMBRE 2026</p>
+        <h3 class="text-sm font-semibold text-white">Modulo rapporto precompilato</h3>
+        <p class="text-sm leading-relaxed text-slate-300 mt-1">Nome, ID Discord, matricola, qualifica, data, orari, fascia Desk e descrizione vengono preparati automaticamente nel modulo.</p>
+      </article>
+      <article class="relative">
+        <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-panel"></span>
+        <p class="text-[11px] font-mono text-slate-500 mb-1">03 SETTEMBRE 2026</p>
+        <h3 class="text-sm font-semibold text-white">Google Form dentro il sito</h3>
+        <p class="text-sm leading-relaxed text-slate-300 mt-1">Il modulo si apre direttamente nell’editor, senza perdere il rapporto. Puoi tornare alla textarea con un solo clic.</p>
+      </article>
+      <article class="relative">
+        <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-amber ring-4 ring-panel"></span>
+        <p class="text-[11px] font-mono text-slate-500 mb-1">03 SETTEMBRE 2026</p>
+        <h3 class="text-sm font-semibold text-white">Toolbar più ordinata</h3>
+        <p class="text-sm leading-relaxed text-slate-300 mt-1">I comandi restano leggibili su ogni schermo e “Pulisci” è separato in basso, vicino alle azioni finali.</p>
+      </article>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between gap-3 border-t border-border1 pt-4">
+      <span class="text-xs text-slate-500">Buon lavoro e grazie per usare il progetto.</span>
+      <button onclick="Updates.close()" class="shrink-0 px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Inizia</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: SUPPORTO -->
+<div id="supportModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'supportModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-sm p-5">
+    <h2 class="text-base font-semibold text-white mb-2">Ti va di supportare il progetto?</h2>
+    <p class="text-sm leading-relaxed text-slate-300 mb-5">Una piccola donazione mi aiuta a continuare a migliorare questo strumento e a mantenerlo aggiornato. Grazie per il supporto.</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="Support.dismiss()" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Non ora</button>
+      <button onclick="Support.donate()" class="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Fai una donazione</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: MODULO RAPPORTO -->
+<div id="formRapportoModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'formRapportoModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto scroll-thin">
+    <h2 class="text-base font-semibold text-white mb-1">Prepara il modulo rapporto</h2>
+    <p class="text-xs text-slate-400 mb-4">I dati salvati qui restano solo nel tuo browser. Il rapporto e gli orari vengono recuperati automaticamente.</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="block text-xs text-slate-400">Nome e cognome
+        <input id="formNome" type="text" autocomplete="name" class="mt-1.5 w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      </label>
+      <label class="block text-xs text-slate-400">ID Discord
+        <input id="formDiscord" type="text" class="mt-1.5 w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      </label>
+      <label class="block text-xs text-slate-400">Matricola
+        <input id="formMatricola" type="text" class="mt-1.5 w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+      </label>
+      <label class="block text-xs text-slate-400">Qualifica
+        <select id="formQualifica" class="mt-1.5 w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+          <option value="">— Seleziona —</option>
+          <option>Dirigente Generale di P.S.</option>
+          <option>Dirigente Superiore</option>
+          <option>Primo Dirigente</option>
+          <option>Vice Questore</option>
+          <option>Vice Questore Aggiunto</option>
+          <option>Commissario Capo</option>
+          <option>Commissario</option>
+          <option>Vice Commissario</option>
+          <option>Allievo Vice Commissario</option>
+          <option>Sostituto Commissario Coordinatore</option>
+          <option>Sostituto Commissario</option>
+          <option>Ispettore Superiore</option>
+          <option>Ispettore Capo</option>
+          <option>Ispettore</option>
+          <option>Vice Istettore</option>
+          <option>Allievo Vice Ispettore</option>
+          <option>Sovrintendente Capo Coordinatore</option>
+          <option>Sovrintendente Capo</option>
+          <option>Sovrintendente</option>
+          <option>Vice Sovrintendente</option>
+          <option>Allievo Vice Sovrintendente</option>
+          <option>Assistente Capo Coordinatore</option>
+          <option>Assistente Capo</option>
+          <option>Assistente</option>
+          <option>Agente Scelto</option>
+          <option>Agente</option>
+          <option>Agente In Prova</option>
+          <option>Allievo Agente</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="block text-xs text-slate-400 mt-3">Fascia oraria Desk
+      <input id="formDesk" type="text" placeholder="es. 14:00 - 16:00 oppure Non effettuato" class="mt-1.5 w-full bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+    </label>
+    <label class="block text-xs text-slate-400 mt-3">Elenco e descrizione eventi
+      <textarea id="formDescription" rows="5" class="mt-1.5 w-full resize-y bg-paper text-slate-900 font-mono text-xs leading-relaxed p-3 rounded-lg border border-border1"></textarea>
+    </label>
+
+    <div class="flex justify-end gap-2 mt-5">
+      <button onclick="Modal.close('formRapportoModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
+      <button onclick="FormRapporto.openForm()" class="px-4 py-2 text-sm rounded-lg bg-teal hover:brightness-110 text-white">Apri modulo compilato</button>
+    </div>
+  </div>
+</div>
+
 <datalist id="colorList">
   <option value="grigia"></option>
   <option value="blu"></option>
@@ -543,6 +710,20 @@ const CONFIG = {
   AUTOSAVE_DELAY: 400,
   DESK_REMINDER_INTERVAL: 20 * 60 * 1000,
   TOAST_DURATION: 2600,
+  DONATION_URL: 'https://paypal.me/CosTyx928',
+  FORM_URL: 'https://docs.google.com/forms/d/e/1FAIpQLSe7v3VHcA6Y_LKpfS5-iSWmeXT_xqzJ-3gw4-_D1eWW86Xk9g/viewform',
+  FORM_PROFILE_KEY: 'rapporto_form_profile',
+  FORM_FIELDS: {
+    nome: '1263491174',
+    discord: '1500450637',
+    matricola: '682896871',
+    qualifica: '1975994767',
+    desk: '1068157603',
+    descrizione: '483770541',
+    inizio: '1583020124',
+    fine: '1619398163',
+    data: '1576063978',
+  },
 };
 
 /* ==========================================================================
@@ -654,6 +835,139 @@ const Tool = {
       button.lastChild.textContent = isActive ? ' Chiudi' : name === 'fdo' ? ' FDO Facile' : ' Database IPRP';
     });
     this.activeTool = showingSameTool ? null : toolName;
+  },
+};
+
+const Support = {
+  dismissedKey: 'rapporto_supporto_dismissed',
+  open() { Modal.open('supportModal'); },
+  dismiss() {
+    try { localStorage.setItem(this.dismissedKey, '1'); } catch (e) { /* localStorage non disponibile */ }
+    Modal.close('supportModal');
+  },
+  donate() {
+    if (!CONFIG.DONATION_URL) {
+      Toast.show('Inserisci il link per le donazioni in CONFIG.DONATION_URL', 'info');
+      return;
+    }
+    window.open(CONFIG.DONATION_URL, '_blank', 'noopener,noreferrer');
+    this.dismiss();
+  },
+  maybeAsk() {
+    try {
+      if (!localStorage.getItem(this.dismissedKey)) setTimeout(() => {
+        if (!Modal.openIds.length) this.open();
+      }, 8000);
+    } catch (e) { /* localStorage non disponibile */ }
+  },
+};
+
+const Updates = {
+  seenKey: 'rapporto_updates_v21_seen',
+  open() {
+    try { localStorage.setItem(this.seenKey, '1'); } catch (e) { /* localStorage non disponibile */ }
+    Modal.open('updatesModal');
+  },
+  close() { Modal.close('updatesModal'); },
+  maybeShow() {
+    try {
+      if (!localStorage.getItem(this.seenKey)) setTimeout(() => this.open(), 700);
+    } catch (e) { /* localStorage non disponibile */ }
+  },
+};
+
+
+const Splash = {
+  close() {
+    const screen = document.getElementById('splashScreen');
+    if (screen) screen.classList.add('splash-hidden');
+  },
+  support() {
+    this.close();
+    setTimeout(() => Support.open(), 220);
+  },
+  start() {
+    setTimeout(() => this.close(), 10000);
+  },
+};
+const FormRapporto = {
+  profileFields: ['formNome', 'formDiscord', 'formMatricola', 'formQualifica'],
+  open() {
+    this.loadProfile();
+    document.getElementById('formDescription').value = Rapporto.el ? Rapporto.el.value.trim() : '';
+    Modal.open('formRapportoModal');
+  },
+  loadProfile() {
+    let profile = {};
+    try { profile = JSON.parse(localStorage.getItem(CONFIG.FORM_PROFILE_KEY) || '{}'); } catch (e) { profile = {}; }
+    this.profileFields.forEach(id => {
+      document.getElementById(id).value = profile[id] || '';
+    });
+  },
+  saveProfile() {
+    const profile = Object.fromEntries(this.profileFields.map(id => [id, document.getElementById(id).value.trim()]));
+    try { localStorage.setItem(CONFIG.FORM_PROFILE_KEY, JSON.stringify(profile)); } catch (e) { /* localStorage non disponibile */ }
+    return profile;
+  },
+  addTime(params, fieldId, date) {
+    if (!date) return;
+    params.set(`entry.${fieldId}_hour`, String(date.getHours()));
+    params.set(`entry.${fieldId}_minute`, String(date.getMinutes()));
+  },
+  openForm() {
+    const profile = this.saveProfile();
+    const desk = document.getElementById('formDesk').value.trim();
+    const description = document.getElementById('formDescription').value.trim();
+    if (Object.values(profile).some(value => !value)) {
+      Toast.show('Compila nome, ID Discord, matricola e qualifica', 'error');
+      return;
+    }
+    if (!description) {
+      Toast.show('Il rapporto è vuoto', 'error');
+      return;
+    }
+
+    const fields = CONFIG.FORM_FIELDS;
+    const params = new URLSearchParams();
+    params.set('usp', 'pp_url');
+    params.set(`entry.${fields.nome}`, profile.formNome);
+    params.set(`entry.${fields.discord}`, profile.formDiscord);
+    params.set(`entry.${fields.matricola}`, profile.formMatricola);
+    params.set(`entry.${fields.qualifica}`, profile.formQualifica);
+    params.set(`entry.${fields.desk}`, desk);
+    params.set(`entry.${fields.descrizione}`, description);
+
+    const now = new Date();
+    const start = Clock.serviceStartAt ? new Date(Clock.serviceStartAt) : null;
+    const serviceDate = start || now;
+    this.addTime(params, fields.inizio, start);
+    this.addTime(params, fields.fine, now);
+    params.set(`entry.${fields.data}_year`, String(serviceDate.getFullYear()));
+    params.set(`entry.${fields.data}_month`, String(serviceDate.getMonth() + 1));
+    params.set(`entry.${fields.data}_day`, String(serviceDate.getDate()));
+
+    const formUrl = `${CONFIG.FORM_URL}?${params.toString()}`;
+    document.getElementById('formFrame').src = formUrl;
+    document.getElementById('reportText').classList.add('hidden');
+    document.getElementById('toolFrame').classList.add('hidden');
+    document.getElementById('databaseFrame').classList.add('hidden');
+    document.getElementById('formFrame').classList.remove('hidden');
+    document.getElementById('formCloseBtn').classList.remove('hidden');
+    this.setEditorMode(true);
+    Modal.close('formRapportoModal');
+  },
+  close() {
+    document.getElementById('formFrame').classList.add('hidden');
+    document.getElementById('formCloseBtn').classList.add('hidden');
+    document.getElementById('reportText').classList.remove('hidden');
+    this.setEditorMode(false);
+  },
+  setEditorMode(formVisible) {
+    const copyButton = document.getElementById('copyBtn');
+    const copyLabel = document.getElementById('copyBtnLabel');
+    copyButton.onclick = formVisible ? () => this.close() : () => Clipboard.copyReport();
+    copyButton.setAttribute('aria-label', formVisible ? 'Torna al rapporto' : 'Copia il rapporto');
+    copyLabel.textContent = formVisible ? 'Apri rapporto' : 'Copia rapporto';
   },
 };
 
@@ -890,13 +1204,11 @@ const Inseguimento = {
 
     let subject = tipo === 'Persona' ? 'un individuo a piedi' : `un ${tipo.toLowerCase()}`;
     if (colore) subject += ` ${colore.toLowerCase()}`;
-
     Rapporto.addEntry(`Inseguimento di ${subject} nei pressi del ${civico}.`);
 
-    ['inseguimentoTipo', 'inseguimentoColore', 'inseguimentoCivico'].forEach(id => {
-      const field = document.getElementById(id);
-      if (field.tagName === 'SELECT') field.selectedIndex = 0; else field.value = '';
-    });
+    document.getElementById('inseguimentoTipo').selectedIndex = 0;
+    document.getElementById('inseguimentoColore').value = '';
+    document.getElementById('inseguimentoCivico').value = '';
     Modal.close('inseguimentoModal');
   },
 };
@@ -932,21 +1244,21 @@ const Convergenza = {
    ESITO
    ========================================================================== */
 const Esito = {
-  open() { Modal.open('esitoModal'); },
+  open() {
+    this.toggleArrestati();
+    Modal.open('esitoModal');
+  },
   toggleArrestati() {
-    const tipo = document.getElementById('esitoTipo').value;
     const esito = document.getElementById('esitoResult').value;
-    const richiedeArrestati = ['azione', 'inseguimento', 'rapina'].includes(tipo) && esito === 'positivo';
-    document.getElementById('esitoArrestatiWrap').classList.toggle('hidden', !richiedeArrestati);
+    document.getElementById('esitoArrestatiWrap').classList.toggle('hidden', esito !== 'positivo');
   },
   confirm() {
     const tipo = document.getElementById('esitoTipo').value;
     const esito = document.getElementById('esitoResult').value;
-    const richiedeArrestati = ['azione', 'inseguimento', 'rapina'].includes(tipo) && esito === 'positivo';
 
     const labels = { azione: "l'azione", inseguimento: "l'inseguimento", rapina: 'la rapina' };
     let phrase = `${Util.cap(labels[tipo])} termina con esito ${esito}.`;
-    if (richiedeArrestati) {
+    if (esito === 'positivo') {
       const arrestati = Number(document.getElementById('esitoArrestati').value);
       if (!Number.isInteger(arrestati) || arrestati < 1) {
         Toast.show('Inserisci il numero dei soggetti arrestati', 'error');
@@ -979,6 +1291,209 @@ const Rientro = {
     Rapporto.addEntry(`Facciamo rientro per ${select.value}.`);
     select.selectedIndex = 0;
     Modal.close('rientroModal');
+  },
+};
+
+/* Descrizione evento rimossa: il rapporto viene compilato tramite i comandi principali. */
+const Description = {
+  normalizeGrade(value) {
+    return (value || '').replace(/^\[|\]$/g, '').trim();
+  },
+  formatOperator(grade, name) {
+    const cleanGrade = this.normalizeGrade(grade);
+    return name ? `${cleanGrade ? `${cleanGrade} ` : ''}${name}` : '';
+  },
+  open() {
+    this.loadFromReport();
+    this.generate();
+  },
+  loadFromReport() {
+    const text = Rapporto.el ? Rapporto.el.value : '';
+    const lines = (text || '').split('\n').filter(Boolean);
+
+    const form = [...lines].reverse().find(line => /^\s*\[?\d{2}:\d{2}\]?\s*Formo\s+/i.test(line));
+    if (form) {
+      const match = form.match(/Formo\s+(.+?)\s+con\s+(?:\[)?([^\]]+)(?:\])?\s*(.+)/i);
+      if (match) {
+        const [, pattuglia, grado, nome] = match;
+        document.getElementById('descriptionPattuglia').value = pattuglia.trim();
+        document.getElementById('descriptionGrado1').value = grado ? `[${this.normalizeGrade(grado)}]` : '';
+        document.getElementById('descriptionOperatore1').value = nome.trim();
+      }
+    }
+
+    const convergenza = [...lines].reverse().find(line => /Convergiamo per/i.test(line));
+    if (convergenza) {
+      const convMatch = convergenza.match(/Convergiamo per\s+(.+?)\s+al civico\s+(.+?)(?:\s+in ausilio della\s+(.+?))?\./i);
+      if (convMatch) {
+        const [, situazione, civico, ausilio] = convMatch;
+        document.getElementById('descriptionCivico').value = civico.trim();
+        document.getElementById('descriptionEvento').value = situazione.trim();
+        if (ausilio) document.getElementById('descriptionAusilio').value = ausilio.trim();
+      }
+    }
+
+    const fermo = [...lines].reverse().find(line => /Fermo di\s+/i.test(line));
+    if (fermo) {
+      const fermoMatch = fermo.match(/Fermo di\s+(?:un\s+)?([^\s]+(?:\s+[^\s]+)?)?(?:\s+.*?targato\s+([A-Z0-9]+))?(?:\s+nei pressi del\s+(.+?))?(?:\s+-\s+Motivazione:\s+(.+))?\./i);
+      if (fermoMatch) {
+        const [, tipo, targa, civico] = fermoMatch;
+        if (tipo) document.getElementById('descriptionVeicolo').value = tipo.trim();
+        if (civico) document.getElementById('descriptionCivico').value = civico.trim();
+        if (targa) {
+          const noteField = document.getElementById('descriptionNote');
+          noteField.value = noteField.value ? `${noteField.value} Targa ${targa.toUpperCase()}.` : `Targa ${targa.toUpperCase()}.`;
+        }
+      }
+    }
+
+    const inseguimento = [...lines].reverse().find(line => /Inseguimento di\s+/i.test(line));
+    if (inseguimento) {
+      const match = inseguimento.match(/Inseguimento di\s+(?:un\s+)?(.+?)\s+nei pressi del\s+(.+?)\./i);
+      if (match) {
+        const [, veicolo, civico] = match;
+        document.getElementById('descriptionVeicolo').value = veicolo.trim();
+        document.getElementById('descriptionCivico').value = civico.trim();
+      }
+    }
+
+    if (!document.getElementById('descriptionPattuglia').value.trim()) {
+      document.getElementById('descriptionPattuglia').value = 'Pattuglia';
+    }
+  },
+  generate() {
+    this.loadFromReport();
+
+    const tipo = document.getElementById('descriptionTipo').value;
+    const pattuglia = document.getElementById('descriptionPattuglia').value.trim() || 'l’unità';
+    const grado1 = document.getElementById('descriptionGrado1').value.trim();
+    const nome1 = document.getElementById('descriptionOperatore1').value.trim();
+    const grado2 = document.getElementById('descriptionGrado2').value.trim();
+    const nome2 = document.getElementById('descriptionOperatore2').value.trim();
+    const civico = document.getElementById('descriptionCivico').value.trim();
+    const ausilio = document.getElementById('descriptionAusilio').value.trim();
+    const veicolo = document.getElementById('descriptionVeicolo').value.trim() || 'veicolo';
+    const colore = document.getElementById('descriptionColore').value.trim() || 'non specificato';
+    const evento = document.getElementById('descriptionEvento').value.trim() || tipo;
+    const soggetto = document.getElementById('descriptionSoggetto').value.trim();
+    const note = document.getElementById('descriptionNote').value.trim();
+    const ora = new Date();
+    const oraText = `${Util.pad(ora.getHours())}:${Util.pad(ora.getMinutes())}`;
+
+    const operatorPhrase = nome1 && nome2
+      ? `composta dai ${this.formatOperator(grado1, nome1)} e dal ${this.formatOperator(grado2, nome2)}`
+      : nome1
+        ? `composta dal ${this.formatOperator(grado1, nome1)}`
+        : 'composta dal proprio equipaggio';
+
+    const hasThreat = /(mascherat|arma|pistola|fuoco|sparatoria|azione|aperto il fuoco|al fuoco)/i.test(`${evento} ${soggetto} ${note}`);
+    const hasMasked = /(mascherat|viso coperto|volto coperto|coperto)/i.test(`${evento} ${soggetto} ${note}`);
+    const hasGun = /(arma|pistola|fucile|armi|da fuoco)/i.test(`${evento} ${soggetto} ${note}`);
+
+    let text = '';
+    switch (tipo) {
+      case 'arresto':
+        text = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, interveniva nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''}${evento ? `, per un ${evento}` : ''}. In seguito alle verifiche e al controllo del territorio, gli operatori individuavano il soggetto e ne rilevavano la responsabilità dell’evento. ${note || 'L’attività si concludeva con l’identificazione del soggetto e la redazione degli atti necessari.'} Infine i soggetti vengono portati alle celle della questura per concludere l’arresto.`;
+        break;
+      case 'rapina':
+        let rapinaText = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, interveniva in seguito a segnalazione di ${evento || 'rapina'} verificatasi nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''}. Gli accertamenti consentivano di ricostruire i fatti e di individuare i soggetti coinvolti.`;
+        if (hasThreat || hasMasked || hasGun || soggetto) {
+          rapinaText += ` Durante la fuga, il soggetto veniva visto ${hasMasked ? 'con volto coperto' : 'in atteggiamento sospetto'}${hasGun ? ' e in possesso di arma da fuoco' : ''}, dando quindi vita a un inseguimento che si concludeva con l’apertura del fuoco contro gli operatori. I soggetti venivano neutralizzati e trattenuti a seguito dell’intervento immediato.`;
+        } else {
+          rapinaText += ` In particolare, il soggetto veniva raggiunto in un successivo inseguimento e trattenuto in vista degli accertamenti definitivi.`;
+        }
+        rapinaText += note ? ` ${note}` : ' Infine i soggetti vengono portati alle celle della questura per concludere l’arresto.';
+        text = rapinaText;
+        break;
+      case 'inseguimento':
+        let chase = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, dava seguito a un inseguimento di ${veicolo} di colore ${colore} nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''}.`;
+        if (hasThreat || hasMasked || hasGun || soggetto) {
+          chase += ` Durante l’inseguimento, il soggetto veniva visto ${hasMasked ? 'con volto coperto' : 'in atteggiamento sospetto'}${hasGun ? ' e in possesso di arma da fuoco' : ''}${soggetto ? `, risultando essere ${soggetto}` : ''}, aprendo quindi il fuoco contro gli operatori. A seguito dell’intervento immediato, i soggetti venivano neutralizzati e trattenuti. Successivamente, gli operatori provvedevano alla segnalazione dell’evento e al trasporto agli uffici di polizia per gli ulteriori accertamenti.`;
+        } else {
+          chase += ` Dopo le opportune verifiche, l’equipaggio raggiungeva il soggetto e lo tratteneva in attesa degli accertamenti definitivi.`;
+        }
+        text = chase + (note ? ` ${note}` : '');
+        break;
+      case 'convergenza':
+        text = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, convergevano nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''}${evento ? `, per un ${evento}` : ''}. ${note || 'L’attività veniva coordinata con le forze presenti e con le unità in ausilio.'}`;
+        break;
+      case 'sparatoria':
+        text = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, interveniva in un contesto di ${evento} nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''}. Gli operatori provvedevano alla segnalazione tempestiva dell’evento e alle verifiche immediate del territorio. ${note || 'Il caso veniva poi riferito alla competente Autorità per gli ulteriori accertamenti.'}`;
+        break;
+      case 'rissa':
+        text = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, interveniva per una ${evento} verificatasi nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''}. Gli operatori provvedevano al contenimento della situazione e alle verifiche delle persone coinvolte. ${note || 'Le parti venivano identificate e il caso trasmesso per i relativi provvedimenti.'}`;
+        break;
+      case 'fermo':
+        text = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, effettuava nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''} il fermo di controllo di un ${veicolo} di colore ${colore}. ${note || 'L’operazione veniva svolta in relazione alle verifiche di rito e agli accertamenti conseguenti.'}`;
+        break;
+      default:
+        text = `In data odierna, alle ore ${oraText} circa, l’unità ${pattuglia}, ${operatorPhrase}, interveniva nei pressi del civico ${civico || 'non specificato'}${ausilio ? `, in ausilio della ${ausilio}` : ''} per ${evento || 'necessarie verifiche'} di servizio.`;
+    }
+
+    document.getElementById('descriptionOutput').value = text.trim();
+    return text.trim();
+  },
+  async generateWithAI() {
+    const button = document.getElementById('descriptionAiBtn');
+    const output = document.getElementById('descriptionOutput');
+    const fields = ['descriptionTipo', 'descriptionPattuglia', 'descriptionGrado1', 'descriptionOperatore1',
+      'descriptionGrado2', 'descriptionOperatore2', 'descriptionCivico', 'descriptionAusilio',
+      'descriptionVeicolo', 'descriptionColore', 'descriptionEvento', 'descriptionSoggetto', 'descriptionNote'];
+    const values = Object.fromEntries(fields.map(id => [id.replace('description', '').toLowerCase(), document.getElementById(id).value.trim()]));
+    values.rapporto = Rapporto.el ? Rapporto.el.value.trim() : '';
+
+    button.disabled = true;
+    button.textContent = 'Scrittura…';
+    try {
+      const response = await fetch('/api/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.text) throw new Error(data.error || 'Risposta AI non disponibile');
+      output.value = data.text.trim();
+      Toast.show('Sintesi AI generata', 'success');
+    } catch (error) {
+      Toast.show('AI non disponibile: uso la generazione locale', 'error');
+      this.generate();
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Sintesi AI';
+    }
+  },
+  copy() {
+    const value = document.getElementById('descriptionOutput').value.trim();
+    if (!value) {
+      Toast.show('Genera prima la descrizione', 'error');
+      return;
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(value).then(() => Toast.show('Descrizione copiata!')).catch(() => this.fallbackCopy(value));
+      return;
+    }
+    this.fallbackCopy(value);
+  },
+  fallbackCopy(value) {
+    const ta = document.createElement('textarea');
+    ta.value = value;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    try { document.execCommand('copy'); Toast.show('Descrizione copiata!'); }
+    catch (e) { Toast.show('Copia non riuscita', 'error'); }
+    document.body.removeChild(ta);
+  },
+  insert() {
+    const value = document.getElementById('descriptionOutput').value.trim();
+    if (!value) {
+      Toast.show('Genera prima il testo', 'error');
+      return;
+    }
+    Rapporto.addEntry(value);
+    Toast.show('Descrizione inserita nel rapporto', 'success');
   },
 };
 
@@ -1037,9 +1552,11 @@ const Clipboard = {
         throw new Error('fallback fallito');
       }
       Toast.show('Rapporto copiato!');
+      Support.open();
     } catch (e) {
       if (this.fallbackCopy(text)) {
         Toast.show('Rapporto copiato!');
+        Support.open();
       } else {
         Toast.show('Copia non riuscita, seleziona e copia manualmente', 'error');
       }
@@ -1139,6 +1656,9 @@ window.addEventListener('DOMContentLoaded', () => {
   Storage.setStatus('saved');
   Clock.start();
   buildSectionButtons();
+  Splash.start();
+  Updates.maybeShow();
+  Support.maybeAsk();
 });
 </script>
 </body>
