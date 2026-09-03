@@ -136,7 +136,7 @@
 <header class="sticky top-0 z-30 bg-ink/95 backdrop-blur border-b border-border1">
   <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
     <div class="flex items-center gap-3 min-w-0">
-      <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0" fill="none">
+      <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0" fill="none" aria-hidden="true">
         <rect x="1" y="1" width="32" height="32" rx="8" stroke="#3B63F4" stroke-width="1.5"/>
         <path d="M17 8l7 3v5c0 5-3 8.2-7 10-4-1.8-7-5-7-10v-5l7-3z" fill="#3B63F4" fill-opacity=".18" stroke="#3B63F4" stroke-width="1.4" stroke-linejoin="round"/>
       </svg>
@@ -378,7 +378,20 @@
     </select>
 
     <label class="block text-xs text-slate-400 mb-1.5" for="operatorName">Nome operatore</label>
-    <input id="operatorName" type="text" placeholder="es. Mario Rossi" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+    <input id="operatorName" type="text" placeholder="es. Mario Rossi" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+
+    <button type="button" onclick="Patrol.toggleSecondOperator()" class="mb-3 inline-flex items-center gap-1.5 self-start text-xs text-accent hover:text-white transition-colors">
+      <span id="secondOperatorToggleIcon" aria-hidden="true">+</span>
+      <span id="secondOperatorToggleLabel">Aggiungi secondo operatore</span>
+    </button>
+
+    <div id="secondOperatorFields" class="hidden">
+      <label class="block text-xs text-slate-400 mb-1.5" for="operatorGrade2">Grado secondo operatore</label>
+      <select id="operatorGrade2" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100"></select>
+
+      <label class="block text-xs text-slate-400 mb-1.5" for="operatorName2">Nome secondo operatore</label>
+      <input id="operatorName2" type="text" placeholder="es. Luca Bianchi" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+    </div>
 
     <div class="flex justify-end gap-2">
       <button onclick="Modal.close('patrolModal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annulla</button>
@@ -562,7 +575,7 @@
 </div>
 
 <!-- ============================================================ MODAL: AGGIORNAMENTI -->
-<div id="updatesModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'updatesModal')">
+<div id="updatesModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Updates.overlayClick(event)">
   <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto scroll-thin">
     <div class="flex items-start justify-between gap-4 mb-5">
       <div>
@@ -570,10 +583,10 @@
         <h2 class="text-xl font-semibold text-white">Cosa c’è di nuovo</h2>
         <p class="text-sm text-slate-400 mt-1">Le funzioni che rendono la compilazione più rapida.</p>
       </div>
-      <span class="shrink-0 rounded-full border border-teal/40 bg-teal/10 px-2.5 py-1 text-[11px] font-mono text-teal">V2.1</span>
+      <span id="updatesVersion" class="shrink-0 rounded-full border border-teal/40 bg-teal/10 px-2.5 py-1 text-[11px] font-mono text-teal">V2.1</span>
     </div>
 
-    <div class="border-l border-border1 pl-4 ml-1 space-y-5">
+    <div id="previousUpdates" class="border-l border-border1 pl-4 ml-1 space-y-5">
       <article class="relative">
         <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-teal ring-4 ring-panel"></span>
         <p class="text-[11px] font-mono text-slate-500 mb-1">03 SETTEMBRE 2026</p>
@@ -591,6 +604,15 @@
         <p class="text-[11px] font-mono text-slate-500 mb-1">03 SETTEMBRE 2026</p>
         <h3 class="text-sm font-semibold text-white">Toolbar più ordinata</h3>
         <p class="text-sm leading-relaxed text-slate-300 mt-1">I comandi restano leggibili su ogni schermo e “Pulisci” è separato in basso, vicino alle azioni finali.</p>
+      </article>
+    </div>
+
+    <div id="newUpdate" class="hidden border-l border-border1 pl-4 ml-1">
+      <article class="relative">
+        <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-panel"></span>
+        <p class="text-[11px] font-mono text-slate-500 mb-1">04 SETTEMBRE 2026</p>
+        <h3 class="text-sm font-semibold text-white">Secondo operatore e orario di ingresso</h3>
+        <p class="text-sm leading-relaxed text-slate-300 mt-1">Durante la formazione della pattuglia puoi aggiungere un secondo operatore quando necessario. Il modulo rapporto recupera ora anche l’orario di inizio servizio.</p>
       </article>
     </div>
 
@@ -697,6 +719,7 @@
 const CONFIG = {
   STORAGE_KEY: 'rapporto_servizio_v2',
   SERVICE_START_KEY: 'rapporto_servizio_start',
+  SERVICE_LAST_START_KEY: 'rapporto_servizio_last_start',
   SECTIONS: ['Squadra Volante','Desk','Rep. Mobile','C.O.21','Pol. Strada','Scientifica','PolPen','N.O.C.S.','U.O.P.I.','Servizio Aereo'],
   SECTION_ICONS: {
     'Squadra Volante': '🖥️',
@@ -766,6 +789,7 @@ const Toast = {
 
 const Clock = {
   serviceStartAt: null,
+  lastServiceStartAt: null,
   start() {
     this.loadServiceState();
     this.tick();
@@ -797,12 +821,19 @@ const Clock = {
     try {
       const saved = localStorage.getItem(CONFIG.SERVICE_START_KEY);
       this.serviceStartAt = saved ? Number(saved) : null;
+      const lastSaved = localStorage.getItem(CONFIG.SERVICE_LAST_START_KEY);
+      this.lastServiceStartAt = lastSaved ? Number(lastSaved) : this.serviceStartAt;
       if (!Number.isFinite(this.serviceStartAt)) this.serviceStartAt = null;
+      if (!Number.isFinite(this.lastServiceStartAt)) this.lastServiceStartAt = null;
     } catch (e) { this.serviceStartAt = null; }
   },
   startService() {
     this.serviceStartAt = Date.now();
-    try { localStorage.setItem(CONFIG.SERVICE_START_KEY, this.serviceStartAt); } catch (e) { /* localStorage non disponibile */ }
+    this.lastServiceStartAt = this.serviceStartAt;
+    try {
+      localStorage.setItem(CONFIG.SERVICE_START_KEY, this.serviceStartAt);
+      localStorage.setItem(CONFIG.SERVICE_LAST_START_KEY, this.lastServiceStartAt);
+    } catch (e) { /* localStorage non disponibile */ }
     this.tick();
   },
   stopService() {
@@ -867,14 +898,38 @@ const Support = {
 
 const Updates = {
   seenKey: 'rapporto_updates_v21_seen',
+  newSeenKey: 'rapporto_updates_v22_seen',
+  showingLegacy: false,
   open() {
-    try { localStorage.setItem(this.seenKey, '1'); } catch (e) { /* localStorage non disponibile */ }
+    let legacySeen = false;
+    let newSeen = false;
+    try {
+      legacySeen = Boolean(localStorage.getItem(this.seenKey));
+      newSeen = Boolean(localStorage.getItem(this.newSeenKey));
+    } catch (e) { /* localStorage non disponibile */ }
+
+    this.showingLegacy = !legacySeen;
+    document.getElementById('previousUpdates').classList.toggle('hidden', !this.showingLegacy);
+    document.getElementById('newUpdate').classList.toggle('hidden', this.showingLegacy || newSeen);
+    document.getElementById('updatesVersion').textContent = this.showingLegacy ? 'V2.1' : 'V2.2';
+
+    try {
+      localStorage.setItem(this.showingLegacy ? this.seenKey : this.newSeenKey, '1');
+    } catch (e) { /* localStorage non disponibile */ }
     Modal.open('updatesModal');
   },
-  close() { Modal.close('updatesModal'); },
+  close() {
+    Modal.close('updatesModal');
+    if (this.showingLegacy) {
+      setTimeout(() => this.open(), 240);
+    }
+  },
+  overlayClick(event) {
+    if (event.target.id === 'updatesModal') this.close();
+  },
   maybeShow() {
     try {
-      if (!localStorage.getItem(this.seenKey)) setTimeout(() => this.open(), 700);
+      if (!localStorage.getItem(this.newSeenKey)) setTimeout(() => this.open(), 700);
     } catch (e) { /* localStorage non disponibile */ }
   },
 };
@@ -941,7 +996,7 @@ const FormRapporto = {
     params.set(`entry.${fields.descrizione}`, description);
 
     const now = new Date();
-    const start = Clock.serviceStartAt ? new Date(Clock.serviceStartAt) : null;
+    const start = (Clock.serviceStartAt || Clock.lastServiceStartAt) ? new Date(Clock.serviceStartAt || Clock.lastServiceStartAt) : null;
     const serviceDate = start || now;
     this.addTime(params, fields.inizio, start);
     this.addTime(params, fields.fine, now);
@@ -997,6 +1052,7 @@ const Rapporto = {
       deskActive: this.deskActive,
       deskLastActivityAt: this.deskLastActivityAt,
       serviceStartAt: Clock.serviceStartAt,
+      lastServiceStartAt: Clock.lastServiceStartAt,
     });
     if (this.history.length > 50) this.history.shift();
     const needsBreak = this.el.value.length > 0 && !this.el.value.endsWith('\n');
@@ -1017,6 +1073,7 @@ const Rapporto = {
     this.deskActive = previous.deskActive;
     this.deskLastActivityAt = previous.deskLastActivityAt;
     Clock.serviceStartAt = previous.serviceStartAt;
+    Clock.lastServiceStartAt = previous.lastServiceStartAt;
     Clock.tick();
     Storage.triggerAutosave();
     this.updateMeta();
@@ -1102,7 +1159,8 @@ const Modal = {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && Modal.openIds.length) {
-    Modal.close(Modal.openIds[Modal.openIds.length - 1]);
+    const id = Modal.openIds[Modal.openIds.length - 1];
+    if (id === 'updatesModal') Updates.close(); else Modal.close(id);
   }
 });
 
@@ -1126,6 +1184,15 @@ const Confirm = {
    ========================================================================== */
 const Patrol = {
   open() { Modal.open('patrolModal'); },
+  toggleSecondOperator() {
+    const fields = document.getElementById('secondOperatorFields');
+    const icon = document.getElementById('secondOperatorToggleIcon');
+    const label = document.getElementById('secondOperatorToggleLabel');
+    const isHidden = fields.classList.toggle('hidden');
+    icon.textContent = isHidden ? '+' : '−';
+    label.textContent = isHidden ? 'Aggiungi secondo operatore' : 'Rimuovi secondo operatore';
+    if (!isHidden) document.getElementById('operatorGrade2').focus();
+  },
   toggleCustom() {
     const select = document.getElementById('patrolSelect');
     const wrap = document.getElementById('patrolCustomWrap');
@@ -1136,21 +1203,31 @@ const Patrol = {
     const customName = document.getElementById('patrolCustomName');
     const grade = document.getElementById('operatorGrade');
     const name = document.getElementById('operatorName');
+    const grade2 = document.getElementById('operatorGrade2');
+    const name2 = document.getElementById('operatorName2');
 
     const patrolName = select.value === '__custom__' ? customName.value.trim() : select.value;
+    const secondOperator = name2.value.trim()
+      ? ` e ${grade2.value} ${name2.value.trim()}`
+      : '';
 
     if (!select.value || (select.value === '__custom__' && !patrolName) || !name.value.trim()) {
       Toast.show('Compila tutti i campi richiesti', 'error');
       return;
     }
 
-    Rapporto.addEntry(`Formo ${patrolName} con ${grade.value} ${name.value.trim()}`);
+    Rapporto.addEntry(`Formo ${patrolName} con ${grade.value} ${name.value.trim()}${secondOperator}`);
 
     select.selectedIndex = 0;
     customName.value = '';
     document.getElementById('patrolCustomWrap').classList.add('hidden');
     grade.selectedIndex = 0;
     name.value = '';
+    grade2.selectedIndex = 0;
+    name2.value = '';
+    document.getElementById('secondOperatorFields').classList.add('hidden');
+    document.getElementById('secondOperatorToggleIcon').textContent = '+';
+    document.getElementById('secondOperatorToggleLabel').textContent = 'Aggiungi secondo operatore';
     Modal.close('patrolModal');
   },
 };
@@ -1651,6 +1728,13 @@ function buildSectionButtons() {
   });
 }
 
+function initPatrolGradeOptions() {
+  const grade = document.getElementById('operatorGrade');
+  const secondGrade = document.getElementById('operatorGrade2');
+  secondGrade.innerHTML = grade.innerHTML;
+  secondGrade.insertAdjacentHTML('afterbegin', '<option value="">— Nessun secondo operatore —</option>');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   Toast.init();
   Rapporto.init();
@@ -1658,6 +1742,7 @@ window.addEventListener('DOMContentLoaded', () => {
   Rapporto.updateMeta();
   Storage.setStatus('saved');
   Clock.start();
+  initPatrolGradeOptions();
   buildSectionButtons();
   Splash.start();
   Updates.maybeShow();
