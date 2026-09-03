@@ -99,6 +99,23 @@
   .splash-screen.splash-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
   .splash-progress { animation: splash-progress 10s ease-in-out forwards; }
   @keyframes splash-progress { from { width: 0; } to { width: 100%; } }
+
+  body.light-mode { background: #dbe2ea !important; color: #172033 !important; }
+  body.light-mode header { background: rgba(219, 226, 234, .96) !important; border-color: #aebdce !important; }
+  body.light-mode [class~="bg-panel"] { background: #edf1f5 !important; border-color: #b8c5d3 !important; }
+  body.light-mode [class~="bg-panel2"] { background: #d4dde7 !important; border-color: #afbdcd !important; }
+  body.light-mode .text-white { color: #172033 !important; }
+  body.light-mode .text-slate-100, body.light-mode .text-slate-200 { color: #263449 !important; }
+  body.light-mode .text-slate-300, body.light-mode .text-slate-400 { color: #526176 !important; }
+  body.light-mode .text-slate-500, body.light-mode .text-slate-600 { color: #6b7b91 !important; }
+  body.light-mode footer { color: #718096 !important; }
+  body.light-mode button.bg-accent, body.light-mode button.bg-teal,
+  body.light-mode button.bg-danger, body.light-mode button.bg-white { color: #ffffff !important; }
+  body.light-mode button.bg-white { color: #172033 !important; }
+  body.light-mode .action-btn:hover,
+  body.light-mode summary:hover { background: #c5d1de !important; color: #172033 !important; }
+  body.light-mode .action-btn:hover { border-left-color: var(--dot, #3B63F4) !important; }
+  .weekly-bar { transform-origin: bottom; transition: height .25s ease; }
 </style>
 
 <script data-goatcounter="https://costyx09.goatcounter.com/count"
@@ -155,6 +172,7 @@
         <span id="serviceTimerLabel" class="text-[10px] text-slate-500">Non in servizio</span>
         <span id="serviceTimer" class="font-mono text-sm text-slate-200">--:--:--</span>
       </div>
+      <button id="themeToggle" onclick="Theme.toggle()" aria-label="Attiva modalità chiara" class="inline-flex items-center rounded-lg border border-border1 bg-panel2 px-2.5 py-2 text-sm text-slate-200 hover:bg-[#1a2b4d] transition-colors">☼</button>
       <button onclick="Support.open()" aria-label="Supporta il progetto con una donazione" class="inline-flex items-center gap-1.5 rounded-lg border border-amber/70 bg-amber/10 px-2.5 py-2 text-xs font-medium text-amber hover:bg-amber/20 transition-colors whitespace-nowrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 8.8c0 5.3-8.8 10.2-8.8 10.2S3.2 14.1 3.2 8.8A4.3 4.3 0 0 1 12 6.7a4.3 4.3 0 0 1 8.8 2.1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         <span class="hidden sm:inline">Sostieni il progetto</span>
@@ -169,7 +187,7 @@
 </header>
 
 <!-- ============================================================ MAIN -->
-<main class="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5 items-start">
+<main class="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-x-5 gap-y-2 items-start">
 
   <!-- ---------------------------------------------------------- SIDEBAR / AZIONI -->
   <section aria-label="Strumenti e azioni" class="bg-panel border border-border1 rounded-2xl p-3 sm:p-4 flex flex-col lg:sticky lg:top-[76px] lg:max-h-[calc(100vh-96px)] overflow-y-auto scroll-thin">
@@ -195,6 +213,8 @@
       </summary>
       <div class="pt-1 pb-2 flex flex-col gap-1">
         <button onclick="Patrol.open()" style="--dot:#3B63F4" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Forma pattuglia</button>
+        <button onclick="Patrol.edit()" style="--dot:#D98E2B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Aggiungi operatore</button>
+        <button onclick="Patrol.disband()" style="--dot:#D9534F" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Sciogli pattuglia</button>
         <button onclick="Rientro.open()" style="--dot:#3B63F4" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Rientro</button>
         <button onclick="Rapporto.addEntry('Torniamo al normale.')" style="--dot:#1F9E8B" class="action-btn text-left px-3 py-2 rounded-lg text-sm text-slate-100 hover:bg-panel2 transition-colors">Torniamo al normale</button>
       </div>
@@ -237,6 +257,7 @@
 
   </section>
 
+  <div class="lg:col-start-2 flex flex-col gap-2 min-w-0">
   <!-- ---------------------------------------------------------- EDITOR -->
   <section aria-label="Editor del rapporto" class="bg-panel border border-border1 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 min-h-[70vh]">
     <div class="flex flex-wrap items-center justify-between gap-2">
@@ -301,6 +322,27 @@
       </button>
     </div>
   </section>
+
+  <section aria-label="Statistiche della settimana" class="bg-panel border border-border1 rounded-2xl p-3 sm:p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.18em] text-teal font-semibold">Riepilogo</p>
+        <h2 class="text-base font-semibold text-white">Statistiche della settimana</h2>
+      </div>
+      <button onclick="Stats.open()" class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-medium text-white hover:bg-accent600 transition-colors"><span aria-hidden="true">▥</span>Dettagli</button>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div class="rounded-lg border border-border1 bg-panel2 px-3 py-2"><p class="text-[11px] text-slate-400">Ore</p><p id="summaryHours" class="font-mono text-lg text-teal">0h 00m</p></div>
+      <div class="rounded-lg border border-border1 bg-panel2 px-3 py-2"><p class="text-[11px] text-slate-400">Sessioni</p><p id="summarySessions" class="font-mono text-lg text-white">0</p></div>
+      <div class="rounded-lg border border-border1 bg-panel2 px-3 py-2"><p class="text-[11px] text-slate-400">Righe</p><p id="summaryLines" class="font-mono text-lg text-white">0</p></div>
+      <div class="rounded-lg border border-border1 bg-panel2 px-3 py-2"><p class="text-[11px] text-slate-400">Caratteri</p><p id="summaryChars" class="font-mono text-lg text-white">0</p></div>
+    </div>
+    <div class="mt-4 rounded-lg border border-border1 bg-panel2 p-3">
+      <div class="flex items-center justify-between gap-3 mb-3"><p class="text-xs font-medium text-slate-300">Ore per giorno</p><p class="text-[11px] text-slate-500">settimana corrente</p></div>
+      <div id="weeklyChart" class="grid grid-cols-7 gap-2 items-end h-36" aria-label="Grafico delle ore di servizio per giorno"></div>
+    </div>
+  </section>
+  </div>
 </main>
 
 <footer class="text-center text-[11px] text-slate-600 py-4">
@@ -314,8 +356,9 @@
 <!-- ============================================================ MODAL: FORMA PATTUGLIA -->
 <div id="patrolModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'patrolModal')">
   <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto scroll-thin">
-    <h2 class="text-base font-semibold text-white mb-4">Forma una pattuglia</h2>
+    <h2 id="patrolModalTitle" class="text-base font-semibold text-white mb-4">Forma una pattuglia</h2>
 
+    <div id="patrolFormationFields">
     <label class="block text-xs text-slate-400 mb-1.5" for="patrolSelect">Pattuglia</label>
     <select id="patrolSelect" onchange="Patrol.toggleCustom()" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
       <option value="">— Seleziona una pattuglia —</option>
@@ -391,6 +434,16 @@
 
       <label class="block text-xs text-slate-400 mb-1.5" for="operatorName2">Nome secondo operatore</label>
       <input id="operatorName2" type="text" placeholder="es. Luca Bianchi" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
+    </div>
+    </div>
+
+    <div id="thirdOperatorFields" class="hidden">
+      <p class="mb-3 text-xs font-semibold text-amber">Collega che si unisce</p>
+      <label class="block text-xs text-slate-400 mb-1.5" for="operatorGrade3">Grado operatore</label>
+      <select id="operatorGrade3" class="w-full mb-3 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100"></select>
+
+      <label class="block text-xs text-slate-400 mb-1.5" for="operatorName3">Nome operatore</label>
+      <input id="operatorName3" type="text" placeholder="es. Luca Bianchi" class="w-full mb-5 bg-panel2 border border-border1 rounded-lg p-2.5 text-sm text-slate-100">
     </div>
 
     <div class="flex justify-end gap-2">
@@ -611,8 +664,8 @@
       <article class="relative">
         <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-panel"></span>
         <p class="text-[11px] font-mono text-slate-500 mb-1">04 SETTEMBRE 2026</p>
-        <h3 class="text-sm font-semibold text-white">Secondo operatore e orario di ingresso</h3>
-        <p class="text-sm leading-relaxed text-slate-300 mt-1">Durante la formazione della pattuglia puoi aggiungere un secondo operatore quando necessario. Il modulo rapporto recupera ora anche l’orario di inizio servizio.</p>
+        <h3 class="text-sm font-semibold text-white">Pattuglie, tema chiaro e statistiche</h3>
+        <p class="text-sm leading-relaxed text-slate-300 mt-1">Puoi aggiungere operatori a una pattuglia già formata, usare una modalità chiara più leggibile e controllare le ore di servizio della settimana con un grafico giornaliero.</p>
       </article>
     </div>
 
@@ -620,6 +673,26 @@
       <span class="text-xs text-slate-500">Buon lavoro e grazie per usare il progetto.</span>
       <button onclick="Updates.close()" class="shrink-0 px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Inizia</button>
     </div>
+  </div>
+</div>
+
+<!-- ============================================================ MODAL: STATISTICHE -->
+<div id="statsModal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onclick="Modal.overlayClick(event,'statsModal')">
+  <div class="modal-card bg-panel border border-border1 rounded-2xl w-full max-w-md p-5">
+    <div class="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.18em] text-teal font-semibold mb-1">Riepilogo</p>
+        <h2 class="text-xl font-semibold text-white">Statistiche della settimana</h2>
+      </div>
+      <span id="statsWeekLabel" class="text-[11px] font-mono text-slate-500"></span>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="rounded-xl border border-border1 bg-panel2 p-3"><p class="text-xs text-slate-400">Ore di servizio</p><p id="statsHours" class="mt-1 text-2xl font-semibold text-teal">0h 00m</p></div>
+      <div class="rounded-xl border border-border1 bg-panel2 p-3"><p class="text-xs text-slate-400">Sessioni</p><p id="statsSessions" class="mt-1 text-2xl font-semibold text-white">0</p></div>
+      <div class="rounded-xl border border-border1 bg-panel2 p-3"><p class="text-xs text-slate-400">Righe rapporto</p><p id="statsLines" class="mt-1 text-2xl font-semibold text-white">0</p></div>
+      <div class="rounded-xl border border-border1 bg-panel2 p-3"><p class="text-xs text-slate-400">Caratteri</p><p id="statsChars" class="mt-1 text-2xl font-semibold text-white">0</p></div>
+    </div>
+    <div class="mt-5 flex justify-end"><button onclick="Modal.close('statsModal')" class="px-4 py-2 text-sm rounded-lg bg-accent hover:bg-accent600 text-white">Chiudi</button></div>
   </div>
 </div>
 
@@ -720,6 +793,8 @@ const CONFIG = {
   STORAGE_KEY: 'rapporto_servizio_v2',
   SERVICE_START_KEY: 'rapporto_servizio_start',
   SERVICE_LAST_START_KEY: 'rapporto_servizio_last_start',
+  SERVICE_SESSIONS_KEY: 'rapporto_servizio_sessions',
+  PATROL_KEY: 'rapporto_pattuglia_attiva',
   SECTIONS: ['Squadra Volante','Desk','Rep. Mobile','C.O.21','Pol. Strada','Scientifica','PolPen','N.O.C.S.','U.O.P.I.','Servizio Aereo'],
   SECTION_ICONS: {
     'Squadra Volante': '🖥️',
@@ -790,6 +865,7 @@ const Toast = {
 const Clock = {
   serviceStartAt: null,
   lastServiceStartAt: null,
+  serviceSessions: [],
   start() {
     this.loadServiceState();
     this.tick();
@@ -809,6 +885,7 @@ const Clock = {
     if (serviceTimerLabelEl) serviceTimerLabelEl.textContent = this.serviceStartAt
       ? 'In servizio da'
       : 'Non in servizio';
+    if (typeof Stats !== 'undefined') Stats.render();
   },
   formatDuration(milliseconds) {
     const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -825,6 +902,8 @@ const Clock = {
       this.lastServiceStartAt = lastSaved ? Number(lastSaved) : this.serviceStartAt;
       if (!Number.isFinite(this.serviceStartAt)) this.serviceStartAt = null;
       if (!Number.isFinite(this.lastServiceStartAt)) this.lastServiceStartAt = null;
+      this.serviceSessions = JSON.parse(localStorage.getItem(CONFIG.SERVICE_SESSIONS_KEY) || '[]');
+      if (!Array.isArray(this.serviceSessions)) this.serviceSessions = [];
     } catch (e) { this.serviceStartAt = null; }
   },
   startService() {
@@ -837,6 +916,11 @@ const Clock = {
     this.tick();
   },
   stopService() {
+    if (this.serviceStartAt) {
+      this.serviceSessions.push({ start: this.serviceStartAt, end: Date.now() });
+      this.serviceSessions = this.serviceSessions.slice(-100);
+      try { localStorage.setItem(CONFIG.SERVICE_SESSIONS_KEY, JSON.stringify(this.serviceSessions)); } catch (e) { /* localStorage non disponibile */ }
+    }
     this.serviceStartAt = null;
     try { localStorage.removeItem(CONFIG.SERVICE_START_KEY); } catch (e) { /* localStorage non disponibile */ }
     this.tick();
@@ -893,6 +977,82 @@ const Support = {
         if (!Modal.openIds.length) this.open();
       }, 8000);
     } catch (e) { /* localStorage non disponibile */ }
+  },
+};
+
+const Theme = {
+  key: 'rapporto_theme',
+  init() {
+    let light = false;
+    try { light = localStorage.getItem(this.key) === 'light'; } catch (e) { /* localStorage non disponibile */ }
+    this.apply(light);
+  },
+  apply(light) {
+    document.body.classList.toggle('light-mode', light);
+    const button = document.getElementById('themeToggle');
+    if (button) {
+      button.textContent = light ? '☾' : '☼';
+      button.setAttribute('aria-label', light ? 'Attiva modalità scura' : 'Attiva modalità chiara');
+    }
+  },
+  toggle() {
+    const light = !document.body.classList.contains('light-mode');
+    this.apply(light);
+    try { localStorage.setItem(this.key, light ? 'light' : 'dark'); } catch (e) { /* localStorage non disponibile */ }
+  },
+};
+
+const Stats = {
+  render() {
+    const now = new Date();
+    const weekStart = new Date(now);
+    const day = (now.getDay() + 6) % 7;
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(now.getDate() - day);
+    const sessions = Clock.serviceSessions.filter(session => session.end >= weekStart.getTime());
+    const dailyTotals = Array(7).fill(0);
+    const addIntervalToDays = (start, end) => {
+      for (let index = 0; index < 7; index += 1) {
+        const dayStart = weekStart.getTime() + index * 86400000;
+        const dayEnd = dayStart + 86400000;
+        dailyTotals[index] += Math.max(0, Math.min(end, dayEnd) - Math.max(start, dayStart));
+      }
+    };
+    sessions.forEach(session => addIntervalToDays(session.start, Math.min(session.end, now.getTime())));
+    if (Clock.serviceStartAt) addIntervalToDays(Clock.serviceStartAt, now.getTime());
+    const total = sessions.reduce((sum, session) => {
+      const start = Math.max(session.start, weekStart.getTime());
+      const end = Math.min(session.end, now.getTime());
+      return sum + Math.max(0, end - start);
+    }, Clock.serviceStartAt ? Math.max(0, now.getTime() - Math.max(Clock.serviceStartAt, weekStart.getTime())) : 0);
+    const hours = Math.floor(total / 3600000);
+    const minutes = Math.floor((total % 3600000) / 60000);
+    const text = Rapporto.el ? Rapporto.el.value : '';
+    document.getElementById('statsWeekLabel').textContent = `da ${Util.itDate(weekStart)}`;
+    document.getElementById('statsHours').textContent = `${hours}h ${Util.pad(minutes)}m`;
+    document.getElementById('statsSessions').textContent = sessions.length + (Clock.serviceStartAt ? 1 : 0);
+    document.getElementById('statsLines').textContent = text ? text.split('\n').filter(Boolean).length : 0;
+    document.getElementById('statsChars').textContent = text.length;
+    document.getElementById('summaryHours').textContent = `${hours}h ${Util.pad(minutes)}m`;
+    document.getElementById('summarySessions').textContent = sessions.length + (Clock.serviceStartAt ? 1 : 0);
+    document.getElementById('summaryLines').textContent = text ? text.split('\n').filter(Boolean).length : 0;
+    document.getElementById('summaryChars').textContent = text.length;
+    const maxDaily = Math.max(...dailyTotals, 3600000);
+    const labels = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+    document.getElementById('weeklyChart').innerHTML = dailyTotals.map((milliseconds, index) => {
+      const dayHours = milliseconds / 3600000;
+      const height = dayHours ? Math.max(5, (milliseconds / maxDaily) * 100) : 2;
+      const value = dayHours >= 1 ? `${dayHours.toFixed(1)}h` : `${Math.round(milliseconds / 60000)}m`;
+      return `<div class="flex h-full flex-col items-center justify-end gap-1" title="${labels[index]}: ${value}">
+        <span class="text-[10px] font-mono text-slate-400">${value}</span>
+        <div class="weekly-bar w-full max-w-10 rounded-t-md bg-accent" style="height:${height}%" role="img" aria-label="${labels[index]}: ${value}"></div>
+        <span class="text-[10px] font-medium text-slate-500">${labels[index]}</span>
+      </div>`;
+    }).join('');
+  },
+  open() {
+    this.render();
+    Modal.open('statsModal');
   },
 };
 
@@ -1143,7 +1303,7 @@ const Modal = {
     el.classList.remove('hidden');
     requestAnimationFrame(() => el.classList.add('modal-visible'));
     this.openIds.push(id);
-    const firstField = el.querySelector('select, input');
+    const firstField = [...el.querySelectorAll('select, input')].find(field => field.offsetParent !== null);
     if (firstField) setTimeout(() => firstField.focus(), 60);
   },
   close(id) {
@@ -1183,7 +1343,65 @@ const Confirm = {
    FORMAZIONE PATTUGLIE
    ========================================================================== */
 const Patrol = {
-  open() { Modal.open('patrolModal'); },
+  current: null,
+  editing: false,
+  init() {
+    try {
+      this.current = JSON.parse(localStorage.getItem(CONFIG.PATROL_KEY) || 'null');
+      if (this.current && !Array.isArray(this.current.operators)) {
+        this.current.operators = [
+          { grade: this.current.grade, name: this.current.name },
+          ...(this.current.name2 ? [{ grade: this.current.grade2, name: this.current.name2 }] : []),
+        ];
+      }
+    } catch (e) { this.current = null; }
+  },
+  open() {
+    this.editing = false;
+    document.getElementById('patrolFormationFields').classList.remove('hidden');
+    document.getElementById('thirdOperatorFields').classList.add('hidden');
+    document.getElementById('patrolModalTitle').textContent = 'Forma una pattuglia';
+    Modal.open('patrolModal');
+  },
+  edit() {
+    if (!this.current) {
+      Toast.show('Nessuna pattuglia formata', 'info');
+      return;
+    }
+    const select = document.getElementById('patrolSelect');
+    const knownOption = [...select.options].some(option => option.value === this.current.patrolName);
+    select.value = knownOption ? this.current.patrolName : '__custom__';
+    document.getElementById('patrolCustomName').value = knownOption ? '' : this.current.patrolName;
+    this.toggleCustom();
+    document.getElementById('operatorGrade').value = this.current.grade;
+    document.getElementById('operatorName').value = this.current.name;
+    const secondOperator = this.current.operators[1];
+    document.getElementById('operatorGrade2').value = secondOperator?.grade || '';
+    document.getElementById('operatorName2').value = secondOperator?.name || '';
+    document.getElementById('operatorGrade3').value = '';
+    document.getElementById('operatorName3').value = '';
+    const hasSecond = Boolean(secondOperator);
+    const fields = document.getElementById('secondOperatorFields');
+    fields.classList.toggle('hidden', !hasSecond);
+    document.getElementById('secondOperatorToggleIcon').textContent = hasSecond ? '−' : '+';
+    document.getElementById('secondOperatorToggleLabel').textContent = hasSecond ? 'Rimuovi secondo operatore' : 'Aggiungi secondo operatore';
+    document.getElementById('patrolFormationFields').classList.add('hidden');
+    document.getElementById('patrolModalTitle').textContent = 'Aggiungi operatore';
+    document.getElementById('thirdOperatorFields').classList.remove('hidden');
+    this.editing = true;
+    Modal.open('patrolModal');
+  },
+  disband() {
+    if (!this.current) {
+      Toast.show('Nessuna pattuglia formata', 'info');
+      return;
+    }
+    Rapporto.addEntry(`Sciolgo la pattuglia ${this.current.patrolName}.`);
+    this.current = null;
+    this.editing = false;
+    try { localStorage.removeItem(CONFIG.PATROL_KEY); } catch (e) { /* localStorage non disponibile */ }
+    Toast.show('Pattuglia sciolta', 'info');
+  },
   toggleSecondOperator() {
     const fields = document.getElementById('secondOperatorFields');
     const icon = document.getElementById('secondOperatorToggleIcon');
@@ -1205,18 +1423,39 @@ const Patrol = {
     const name = document.getElementById('operatorName');
     const grade2 = document.getElementById('operatorGrade2');
     const name2 = document.getElementById('operatorName2');
+    const grade3 = document.getElementById('operatorGrade3');
+    const name3 = document.getElementById('operatorName3');
 
     const patrolName = select.value === '__custom__' ? customName.value.trim() : select.value;
     const secondOperator = name2.value.trim()
       ? ` e ${grade2.value} ${name2.value.trim()}`
       : '';
 
+    if (this.editing && !name3.value.trim()) {
+      Toast.show('Inserisci il nome dell’operatore che si unisce', 'error');
+      return;
+    }
+
     if (!select.value || (select.value === '__custom__' && !patrolName) || !name.value.trim()) {
       Toast.show('Compila tutti i campi richiesti', 'error');
       return;
     }
 
-    Rapporto.addEntry(`Formo ${patrolName} con ${grade.value} ${name.value.trim()}${secondOperator}`);
+    const patrolLine = `Formo ${patrolName} con ${grade.value} ${name.value.trim()}${secondOperator}`;
+    if (this.editing) {
+      Rapporto.addEntry(`Si unisce il ${grade3.value} ${name3.value.trim()}.`);
+      this.current.operators.push({ grade: grade3.value, name: name3.value.trim() });
+    } else {
+      Rapporto.addEntry(patrolLine);
+      this.current = {
+        patrolName,
+        operators: [
+          { grade: grade.value, name: name.value.trim() },
+          ...(name2.value.trim() ? [{ grade: grade2.value, name: name2.value.trim() }] : []),
+        ],
+      };
+    }
+    try { localStorage.setItem(CONFIG.PATROL_KEY, JSON.stringify(this.current)); } catch (e) { /* localStorage non disponibile */ }
 
     select.selectedIndex = 0;
     customName.value = '';
@@ -1225,9 +1464,15 @@ const Patrol = {
     name.value = '';
     grade2.selectedIndex = 0;
     name2.value = '';
+    grade3.selectedIndex = 0;
+    name3.value = '';
     document.getElementById('secondOperatorFields').classList.add('hidden');
+    document.getElementById('thirdOperatorFields').classList.add('hidden');
+    document.getElementById('patrolFormationFields').classList.remove('hidden');
+    document.getElementById('patrolModalTitle').textContent = 'Forma una pattuglia';
     document.getElementById('secondOperatorToggleIcon').textContent = '+';
     document.getElementById('secondOperatorToggleLabel').textContent = 'Aggiungi secondo operatore';
+    this.editing = false;
     Modal.close('patrolModal');
   },
 };
@@ -1731,8 +1976,11 @@ function buildSectionButtons() {
 function initPatrolGradeOptions() {
   const grade = document.getElementById('operatorGrade');
   const secondGrade = document.getElementById('operatorGrade2');
+  const thirdGrade = document.getElementById('operatorGrade3');
   secondGrade.innerHTML = grade.innerHTML;
+  thirdGrade.innerHTML = grade.innerHTML;
   secondGrade.insertAdjacentHTML('afterbegin', '<option value="">— Nessun secondo operatore —</option>');
+  thirdGrade.insertAdjacentHTML('afterbegin', '<option value="">— Seleziona il grado —</option>');
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -1742,7 +1990,10 @@ window.addEventListener('DOMContentLoaded', () => {
   Rapporto.updateMeta();
   Storage.setStatus('saved');
   Clock.start();
+  Theme.init();
+  Patrol.init();
   initPatrolGradeOptions();
+  Stats.render();
   buildSectionButtons();
   Splash.start();
   Updates.maybeShow();
